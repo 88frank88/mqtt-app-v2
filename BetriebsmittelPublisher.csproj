@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Product>Betriebsmittel Publisher</Product>
+    <Company>Industrial Automation</Company>
+    <Copyright>© 2026 Industrial Automation</Copyright>
+    <Description>MQTT-basierter Betriebsmittel-Publisher für PG-Nummer-Automatisierung</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\JetBrainsMono-Regular.ttf" />
+    <EmbeddedResource Include="Resources\JetBrainsMono-Bold.ttf" />
+    <EmbeddedResource Include="Resources\Inter-Regular.ttf" />
+    <EmbeddedResource Include="Resources\Inter-Bold.ttf" />
+  </ItemGroup>
+
+</Project>

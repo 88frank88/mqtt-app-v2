@@ -1,0 +1,33 @@
+{
+  "workflow": {
+    "discussion_enabled": true,
+    "planning_enabled": true,
+    "verification_enabled": true,
+    "git_integration": false,
+    "atomic_commits": false,
+    "auto_commit": false
+  },
+  "model": {
+    "profile": "default",
+    "temperature": 0.7,
+    "max_tokens": 2000
+  },
+  "project": {
+    "name": "Betriebsmittel Publisher",
+    "type": "desktop",
+    "platform": "windows",
+    "framework": "dotnet-10",
+    "language": "csharp"
+  },
+  "requirements": {
+    "offline_first": true,
+    "single_file": true,
+    "zero_dependencies": true,
+    "custom_protocol": true
+  },
+  "phases": {
+    "default_duration": "1-2 days",
+    "verification_required": true,
+    "u at_required": true
+  }
+}
