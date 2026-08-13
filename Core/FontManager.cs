@@ -11,7 +11,7 @@ namespace BetriebsmittelPublisher.Core
         private static FontFamily _interFamily;
         private static bool _initialized = false;
 
-        private FontManager() { }
+        static FontManager() { }
 
         public static void Initialize()
         {
