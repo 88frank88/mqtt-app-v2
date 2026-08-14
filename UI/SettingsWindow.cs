@@ -165,7 +165,9 @@ namespace BetriebsmittelPublisher.UI
 
             parent.Controls.Add(groupPanel, 1, rowIndex);
 
-            textBox.TextChanged += (s, e) => UpdateStationNumber(textBox, stationLabel);
+            var localTextBox = textBox;
+            var localLabel = stationLabel;
+            localTextBox.TextChanged += (s, e) => UpdateStationNumber(localTextBox, localLabel);
         }
 
         private void UpdateStationNumber(TextBox textBox, Label stationLabel)

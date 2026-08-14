@@ -38,7 +38,7 @@ namespace BetriebsmittelPublisher.Core
             }
         }
 
-        private static FontFamily LoadFontFromResource(string resourcePath)
+        private static FontFamily? LoadFontFromResource(string resourcePath)
         {
             try
             {
@@ -52,14 +52,18 @@ namespace BetriebsmittelPublisher.Core
                     }
 
                     byte[] fontData = new byte[stream.Length];
-                    stream.Read(fontData, 0, fontData.Length);
+                    stream.ReadExactly(fontData, 0, fontData.Length);
 
                     // Pin the memory and add font to collection
                     IntPtr fontPtr = Marshal.UnsafeAddrOfPinnedArrayElement(fontData, 0);
-                    _privateFontCollection.AddMemoryFont(fontPtr, fontData.Length);
+                    _privateFontCollection?.AddMemoryFont(fontPtr, fontData.Length);
 
                     // Return the last added font family
-                    return _privateFontCollection.Families[_privateFontCollection.Families.Length - 1];
+                    if (_privateFontCollection != null)
+                    {
+                        return _privateFontCollection.Families[_privateFontCollection.Families.Length - 1];
+                    }
+                    return null;
                 }
             }
             catch (Exception ex)
@@ -119,7 +123,7 @@ namespace BetriebsmittelPublisher.Core
             }
         }
 
-        public static FontFamily JetBrainsMonoFamily
+        public static FontFamily? JetBrainsMonoFamily
         {
             get
             {
@@ -129,7 +133,7 @@ namespace BetriebsmittelPublisher.Core
             }
         }
 
-        public static FontFamily InterFamily
+        public static FontFamily? InterFamily
         {
             get
             {

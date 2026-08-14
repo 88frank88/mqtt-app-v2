@@ -71,6 +71,9 @@ namespace BetriebsmittelPublisher.Services
 
             try
             {
+                if (_networkStream == null)
+                    throw new InvalidOperationException("Network stream is null");
+
                 await _networkStream.WriteAsync(packet, 0, packet.Length, cancellationToken).ConfigureAwait(false);
                 await _networkStream.FlushAsync(cancellationToken).ConfigureAwait(false);
             }
@@ -91,6 +94,9 @@ namespace BetriebsmittelPublisher.Services
 
             try
             {
+                if (_networkStream == null)
+                    throw new InvalidOperationException("Network stream is null");
+
                 // Read fixed header (2 bytes minimum)
                 var fixedHeader = await MqttPacketParser.ReadExactBytesAsync(_networkStream, 2, cancellationToken);
                 
@@ -139,7 +145,7 @@ namespace BetriebsmittelPublisher.Services
             if (!IsConnected)
                 throw new InvalidOperationException("Not connected");
 
-            var packet = MqttPacketBuilder.BuildPublishPacket(message.Topic, message.Payload, message.Qos);
+            var packet = MqttPacketBuilder.BuildPublishPacket(message.Topic, message.Payload, message.QoS);
             await SendPacketAsync(packet, cancellationToken).ConfigureAwait(false);
         }
 

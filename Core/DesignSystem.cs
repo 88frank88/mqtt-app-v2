@@ -44,8 +44,8 @@ namespace BetriebsmittelPublisher.Core
             public static readonly float DefaultSansFontSize = 9.5f;
             public static readonly float HeadingFontSize = 12.0f;
 
-            public static FontFamily MonoFontFamily => FontManager.JetBrainsMonoFamily;
-            public static FontFamily SansFontFamily => FontManager.InterFamily;
+            public static FontFamily? MonoFontFamily => FontManager.JetBrainsMonoFamily;
+            public static FontFamily? SansFontFamily => FontManager.InterFamily;
 
             public static Font GetMonoFont(float size = 9.0f, FontStyle style = FontStyle.Regular)
             {
