@@ -18,6 +18,15 @@ namespace BetriebsmittelPublisher.UI
         private Button _testConnectionButton = null!;
         private Label _connectionTestLabel = null!;
 
+        private TextBox _motorNumberTextBox = null!;
+        private TextBox _quitkTextBox = null!;
+        private TextBox _tvTextBox = null!;
+        private TextBox _maTextBox = null!;
+        private TextBox _bauartTextBox = null!;
+        private TextBox _toolPositionTextBox = null!;
+        private TextBox _connectTimeoutTextBox = null!;
+        private TextBox _dmcTextBox = null!;
+
         private TextBox _topic1TextBox = null!;
         private TextBox _topic2TextBox = null!;
         private TextBox _topic3TextBox = null!;
@@ -42,7 +51,7 @@ namespace BetriebsmittelPublisher.UI
         private void InitializeComponent()
         {
             this.Text = $"Einstellungen - {Core.VersionInfo.ShortInfo}";
-            this.Size = new Size(650, 860);
+            this.Size = new Size(680, 1000);
             this.StartPosition = FormStartPosition.CenterParent;
 
             var scrollPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
@@ -138,6 +147,54 @@ namespace BetriebsmittelPublisher.UI
             CreateTopicInputGroup(mainPanel, mainPanel.RowCount, "Betriebsmittel 3:", out _topic3TextBox, out _station3Label);
             mainPanel.RowCount++;
             CreateTopicInputGroup(mainPanel, mainPanel.RowCount, "Betriebsmittel 4:", out _topic4TextBox, out _station4Label);
+            mainPanel.RowCount++;
+
+            // === Automation Section ===
+            var automationHeading = CreateHeading("Automation Parameter");
+            mainPanel.Controls.Add(automationHeading, 0, mainPanel.RowCount);
+            mainPanel.SetColumnSpan(automationHeading, 2);
+            mainPanel.RowCount++;
+
+            var motorLabel = CreateFieldLabel("Motor-Nummer (8-stellig):");
+            mainPanel.Controls.Add(motorLabel, 0, mainPanel.RowCount);
+            _motorNumberTextBox = CreateTextBox(200);
+            _motorNumberTextBox.MaxLength = 8;
+            mainPanel.Controls.Add(_motorNumberTextBox, 1, mainPanel.RowCount);
+            mainPanel.RowCount++;
+
+            mainPanel.Controls.Add(CreateFieldLabel("QUITK:"), 0, mainPanel.RowCount);
+            _quitkTextBox = CreateTextBox(200);
+            mainPanel.Controls.Add(_quitkTextBox, 1, mainPanel.RowCount);
+            mainPanel.RowCount++;
+
+            mainPanel.Controls.Add(CreateFieldLabel("TV:"), 0, mainPanel.RowCount);
+            _tvTextBox = CreateTextBox(200);
+            mainPanel.Controls.Add(_tvTextBox, 1, mainPanel.RowCount);
+            mainPanel.RowCount++;
+
+            mainPanel.Controls.Add(CreateFieldLabel("MA:"), 0, mainPanel.RowCount);
+            _maTextBox = CreateTextBox(200);
+            mainPanel.Controls.Add(_maTextBox, 1, mainPanel.RowCount);
+            mainPanel.RowCount++;
+
+            mainPanel.Controls.Add(CreateFieldLabel("Bauart:"), 0, mainPanel.RowCount);
+            _bauartTextBox = CreateTextBox(200);
+            mainPanel.Controls.Add(_bauartTextBox, 1, mainPanel.RowCount);
+            mainPanel.RowCount++;
+
+            mainPanel.Controls.Add(CreateFieldLabel("Tool-Position:"), 0, mainPanel.RowCount);
+            _toolPositionTextBox = CreateTextBox(200);
+            mainPanel.Controls.Add(_toolPositionTextBox, 1, mainPanel.RowCount);
+            mainPanel.RowCount++;
+
+            mainPanel.Controls.Add(CreateFieldLabel("Connect-Timeout (ms):"), 0, mainPanel.RowCount);
+            _connectTimeoutTextBox = CreateTextBox(200);
+            mainPanel.Controls.Add(_connectTimeoutTextBox, 1, mainPanel.RowCount);
+            mainPanel.RowCount++;
+
+            mainPanel.Controls.Add(CreateFieldLabel("DMC:"), 0, mainPanel.RowCount);
+            _dmcTextBox = CreateTextBox(200);
+            mainPanel.Controls.Add(_dmcTextBox, 1, mainPanel.RowCount);
             mainPanel.RowCount++;
 
             // === Buttons ===
@@ -370,6 +427,15 @@ namespace BetriebsmittelPublisher.UI
             _topic3TextBox.Text = _settings.Betriebsmittel3Topic;
             _topic4TextBox.Text = _settings.Betriebsmittel4Topic;
 
+            _motorNumberTextBox.Text = _settings.MotorNumber;
+            _quitkTextBox.Text = _settings.Quitk;
+            _tvTextBox.Text = _settings.Tv;
+            _maTextBox.Text = _settings.Ma;
+            _bauartTextBox.Text = _settings.Bauart;
+            _toolPositionTextBox.Text = _settings.ToolPosition;
+            _connectTimeoutTextBox.Text = _settings.ConnectTimeout;
+            _dmcTextBox.Text = _settings.Dmc;
+
             UpdateStationNumber(_topic1TextBox, _station1Label);
             UpdateStationNumber(_topic2TextBox, _station2Label);
             UpdateStationNumber(_topic3TextBox, _station3Label);
@@ -405,6 +471,15 @@ namespace BetriebsmittelPublisher.UI
             _settings.Betriebsmittel2Topic = _topic2TextBox.Text;
             _settings.Betriebsmittel3Topic = _topic3TextBox.Text;
             _settings.Betriebsmittel4Topic = _topic4TextBox.Text;
+
+            _settings.MotorNumber = _motorNumberTextBox.Text.Trim();
+            _settings.Quitk = _quitkTextBox.Text.Trim();
+            _settings.Tv = _tvTextBox.Text.Trim();
+            _settings.Ma = _maTextBox.Text.Trim();
+            _settings.Bauart = _bauartTextBox.Text.Trim();
+            _settings.ToolPosition = _toolPositionTextBox.Text.Trim();
+            _settings.ConnectTimeout = _connectTimeoutTextBox.Text.Trim();
+            _settings.Dmc = _dmcTextBox.Text.Trim();
 
             if (SettingsPersistence.Save(_settings))
             {

@@ -1,0 +1,40 @@
+was das programm Schickt:
+<Betriebsmittel>
+  <Name>Betriebsmittel 1</Name>
+  <PG-Nummer>1212121</PG-Nummer>
+  <Timestamp>2026-08-14 18:40:05</Timestamp>
+  <Station>12</Station>
+</Betriebsmittel>
+
+was das programm schicken soll:
+
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<execution:TExecution xmlns:mappingArtice="http://www.de-gmbh.com/mappingArticle" xmlns:mail="http://www.de-gmbh.com/mail" xmlns:table="http://www.de-gmbh.com/table" xmlns:layout="http://www.de-gmbh.com/layout" xmlns:parameterdefinition="http://www.de-gmbh.com/parameterdefinition" xmlns:pickHardware="http://www.de-gmbh.com/pickHardware" xmlns:balance="http://www.de-gmbh.com/balance" xmlns:camera="http://www.de-gmbh.com/camera" xmlns:ns9="http://www.de-gmbh.com/markup" xmlns:testrigxml="http://www.de-gmbh.com/testrigxml" xmlns:ns11="http://www.de-gmbh.com/sound" xmlns:reports="http://www.de-gmbh.com/reports" xmlns:scanner="http://www.de-gmbh.com/scanner" xmlns:rfid="http://www.de-gmbh.com/rfid" xmlns:ns15="http://www.de-gmbh.com/browser" xmlns:laser="http://www.de-gmbh.com/laser" xmlns:bde="http://www.de-gmbh.com/bde" xmlns:ns18="http://www.de-gmbh.com/pickHardwareLaser" xmlns:mappingAddress="http://www.de-gmbh.com/mappingAddress" xmlns:config="http://www.de-gmbh.com/configuration" xmlns:library="http://www.de-gmbh.com/library" xmlns:StateEngineConf="http://www.de-gmbh.com/StateEngineConfig-1.0.0" xmlns:dbConfig="http://www.de-gmbh.com/DEDatabaseConfig" xmlns:classpath="http://www.de-gmbh.com/classpath" xmlns:execution="http://www.de-gmbh.com/workDesc/data/execution" xmlns:module="http://www.de-gmbh.com/modules">
+    <execution:tasks>
+        <execution:task id="81b40f8b-c80d-4a50-8e75-36ffaad062ab" modul="43" toolPosition="1" feature="59000999">
+            <execution:parameter name="QUITK" value="R"/>
+            <execution:parameter name="requestTopic" value="0012/27/43/70027043/ZAE/SCR/Req"/>
+            <execution:parameter name="TV" value="37191"/>
+            <execution:parameter name="MA" value="0004808061"/>
+            <execution:parameter name="bauart" value="2013"/>
+            <execution:parameter name="port" value="1883"/>
+            <execution:parameter name="host" value="127.0.0.1"/>
+            <execution:parameter name="connectTimeout" value="10000"/>
+            <execution:parameter name="responseTopic" value="0012/27/43/70027043/ZAE/SCR/Req"/>
+            <execution:parameter name="DMC" value=""/>
+            <execution:parameter name="motorNr" value="96000002"/>
+        </execution:task>
+    </execution:tasks>
+</execution:TExecution>
+
+
+
+A) Fehler: unter pg Automation fehlt das übergeordnete Feld für Motornummer. mus 8 stellig sein.
+B) modul="43" : sie 43 wird ersetzt durch die  im Topic stehende zahl hinter "xxxx/xx/43" also hinter dem zweiten //
+C) feature="59000999">: ist die PG nummer was wir eintragen
+D) beide Topics werden 1 zu 1 durch den Topic was wir inn Einstellungen eintragen ersetzt: "Topic" bei responseTopic und requestTopic
+Beispiel wir tragen in den Einstellungen für Betriebsmittel 1 = 0012/27/43/70027043/ZAE/SCR/Req, das musst du genauso in den beiden stellen eintragen.
+E) "motorNr" value="96000002"/> ist die MotorNummer
+F) ich muss auswählen können welche Zeile ich publishe, mehrere auf einmal funktioniert nicht.
+
+

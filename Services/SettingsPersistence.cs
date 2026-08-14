@@ -68,6 +68,30 @@ namespace BetriebsmittelPublisher.Services
                         case "betriebsmittel4_topic":
                             settings.Betriebsmittel4Topic = value;
                             break;
+                        case "motor_number":
+                            settings.MotorNumber = value;
+                            break;
+                        case "quitk":
+                            settings.Quitk = value;
+                            break;
+                        case "tv":
+                            settings.Tv = value;
+                            break;
+                        case "ma":
+                            settings.Ma = value;
+                            break;
+                        case "bauart":
+                            settings.Bauart = value;
+                            break;
+                        case "tool_position":
+                            settings.ToolPosition = value;
+                            break;
+                        case "connect_timeout":
+                            settings.ConnectTimeout = value;
+                            break;
+                        case "dmc":
+                            settings.Dmc = value;
+                            break;
                     }
                 }
                 Logger.Info("Einstellungen erfolgreich geladen");
@@ -96,7 +120,16 @@ namespace BetriebsmittelPublisher.Services
                              $"betriebsmittel1_topic={settings.Betriebsmittel1Topic}\n" +
                              $"betriebsmittel2_topic={settings.Betriebsmittel2Topic}\n" +
                              $"betriebsmittel3_topic={settings.Betriebsmittel3Topic}\n" +
-                             $"betriebsmittel4_topic={settings.Betriebsmittel4Topic}\n";
+                             $"betriebsmittel4_topic={settings.Betriebsmittel4Topic}\n" +
+                             $"[Automation]\n" +
+                             $"motor_number={settings.MotorNumber}\n" +
+                             $"quitk={settings.Quitk}\n" +
+                             $"tv={settings.Tv}\n" +
+                             $"ma={settings.Ma}\n" +
+                             $"bauart={settings.Bauart}\n" +
+                             $"tool_position={settings.ToolPosition}\n" +
+                             $"connect_timeout={settings.ConnectTimeout}\n" +
+                             $"dmc={settings.Dmc}\n";
 
                 File.WriteAllText(SettingsFilePath, content);
                 Logger.Info("Einstellungen erfolgreich gespeichert");
