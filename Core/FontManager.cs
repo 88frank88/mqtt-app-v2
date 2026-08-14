@@ -6,9 +6,9 @@ namespace BetriebsmittelPublisher.Core
 {
     public static class FontManager
     {
-        private static PrivateFontCollection _privateFontCollection;
-        private static FontFamily _jetBrainsMonoFamily;
-        private static FontFamily _interFamily;
+        private static PrivateFontCollection? _privateFontCollection;
+        private static FontFamily? _jetBrainsMonoFamily;
+        private static FontFamily? _interFamily;
         private static bool _initialized = false;
 
         static FontManager() { }

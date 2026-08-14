@@ -6,8 +6,8 @@ namespace BetriebsmittelPublisher.Models
 {
     public class PgAutomationModel : INotifyPropertyChanged
     {
-        private string _motorNumber;
-        private List<PgTableRow> _tableRows;
+        private string _motorNumber = string.Empty;
+        private List<PgTableRow> _tableRows = new List<PgTableRow>();
 
         public string MotorNumber
         {
@@ -57,7 +57,7 @@ namespace BetriebsmittelPublisher.Models
             OnPropertyChanged(nameof(TableRows));
         }
 
-        public bool ValidateMotorNumber(out string error)
+        public bool ValidateMotorNumber(out string? error)
         {
             error = null;
 

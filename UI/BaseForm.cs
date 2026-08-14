@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Windows.Forms;
+using BetriebsmittelPublisher.Core;
 
 namespace BetriebsmittelPublisher.UI
 {
@@ -13,7 +14,7 @@ namespace BetriebsmittelPublisher.UI
         protected override void OnPaintBackground(PaintEventArgs e)
         {
             base.OnPaintBackground(e);
-            using (var brush = new SolidBrush(DesignSystem.Colors.Background))
+            using (var brush = new SolidBrush(DesignSystem.Colors.WindowBackground))
             {
                 e.Graphics.FillRectangle(brush, ClientRectangle);
             }
@@ -21,7 +22,7 @@ namespace BetriebsmittelPublisher.UI
 
         protected void ApplyDarkModeTheme()
         {
-            BackColor = DesignSystem.Colors.Background;
+            BackColor = DesignSystem.Colors.WindowBackground;
             ForeColor = DesignSystem.Colors.TextPrimary;
             FormBorderStyle = FormBorderStyle.Sizable;
             StartPosition = FormStartPosition.CenterScreen;

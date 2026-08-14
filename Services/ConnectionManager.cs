@@ -2,13 +2,14 @@ using System;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using BetriebsmittelPublisher.Models;
 
 namespace BetriebsmittelPublisher.Services
 {
     public class ConnectionManager : IDisposable
     {
-        private TcpClient _tcpClient;
-        private NetworkStream _networkStream;
+        private TcpClient? _tcpClient;
+        private NetworkStream? _networkStream;
         private readonly object _lock = new object();
 
         public bool IsConnected { get; private set; }
@@ -45,7 +46,10 @@ namespace BetriebsmittelPublisher.Services
 
             try
             {
-                await _networkStream?.WriteAsync(MqttPacketBuilder.BuildDisconnectPacket());
+                if (_networkStream != null)
+                {
+                    await _networkStream.WriteAsync(MqttPacketBuilder.BuildDisconnectPacket(), 0, MqttPacketBuilder.BuildDisconnectPacket().Length, default).ConfigureAwait(false);
+                }
             }
             catch
             {
@@ -130,6 +134,20 @@ namespace BetriebsmittelPublisher.Services
             return buffer[0];
         }
 
+        public async Task PublishAsync(MqttMessage message, CancellationToken cancellationToken = default)
+        {
+            if (!IsConnected)
+                throw new InvalidOperationException("Not connected");
+
+            var packet = MqttPacketBuilder.BuildPublishPacket(message.Topic, message.Payload, message.Qos);
+            await SendPacketAsync(packet, cancellationToken).ConfigureAwait(false);
+        }
+
+        public void Publish(MqttMessage message)
+        {
+            PublishAsync(message, default).GetAwaiter().GetResult();
+        }
+
         private void Cleanup()
         {
             lock (_lock)
@@ -162,7 +180,14 @@ namespace BetriebsmittelPublisher.Services
 
         public void Dispose()
         {
-            DisconnectAsync().GetAwaiter().GetResult();
+            try
+            {
+                DisconnectAsync().GetAwaiter().GetResult();
+            }
+            catch
+            {
+                // Ignore errors during dispose
+            }
         }
     }
 }

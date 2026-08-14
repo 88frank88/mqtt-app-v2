@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Text.RegularExpressions;
 using BetriebsmittelPublisher.Models;
 using BetriebsmittelPublisher.Services;
 using BetriebsmittelPublisher.Core;
@@ -66,10 +67,10 @@ namespace BetriebsmittelPublisher.UI
             mainPanel.Controls.Add(headingLabel, 0, 0);
             mainPanel.SetColumnSpan(headingLabel, 2);
 
-            CreateTopicInputGroup(mainPanel, 1, "Betriebsmittel 1:", ref _topic1TextBox, ref _station1Label);
-            CreateTopicInputGroup(mainPanel, 2, "Betriebsmittel 2:", ref _topic2TextBox, ref _station2Label);
-            CreateTopicInputGroup(mainPanel, 3, "Betriebsmittel 3:", ref _topic3TextBox, ref _station3Label);
-            CreateTopicInputGroup(mainPanel, 4, "Betriebsmittel 4:", ref _topic4TextBox, ref _station4Label);
+            CreateTopicInputGroup(mainPanel, 1, "Betriebsmittel 1:", out _topic1TextBox, out _station1Label);
+            CreateTopicInputGroup(mainPanel, 2, "Betriebsmittel 2:", out _topic2TextBox, out _station2Label);
+            CreateTopicInputGroup(mainPanel, 3, "Betriebsmittel 3:", out _topic3TextBox, out _station3Label);
+            CreateTopicInputGroup(mainPanel, 4, "Betriebsmittel 4:", out _topic4TextBox, out _station4Label);
 
             var buttonPanel = new FlowLayoutPanel
             {
@@ -123,7 +124,7 @@ namespace BetriebsmittelPublisher.UI
         }
 
         private void CreateTopicInputGroup(TableLayoutPanel parent, int rowIndex, string labelText, 
-            ref TextBox textBox, ref Label stationLabel)
+            out TextBox textBox, out Label stationLabel)
         {
             var label = new Label
             {
@@ -173,7 +174,7 @@ namespace BetriebsmittelPublisher.UI
             stationLabel.Text = stationNumber.HasValue ? $"Station: {stationNumber.Value}" : "Station: -";
         }
 
-        private void ValidateInput(object sender, EventArgs e)
+        private void ValidateInput(object? sender, EventArgs e)
         {
             var isValid = ValidateTopic(_topic1TextBox.Text) &&
                           ValidateTopic(_topic2TextBox.Text) &&

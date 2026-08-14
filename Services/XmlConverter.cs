@@ -54,7 +54,7 @@ namespace BetriebsmittelPublisher.Services
             }
         }
 
-        public bool ValidateXml(string xml, out string error)
+        public bool ValidateXml(string xml, out string? error)
         {
             error = null;
             
