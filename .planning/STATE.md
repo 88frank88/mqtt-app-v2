@@ -1,154 +1,93 @@
 # Betriebsmittel Publisher Project State
 
 ## Current Status
-**Phase**: 02-design-system-implementation
-**Milestone**: Design System Foundation
-**Status**: Plan 02-01 completed - Font Resource Setup and FontManager Implementation
+**Version**: v1.3.0 (mit GitHub-Release synchron)
+**Status**: Produktiv im Test durch Frank (2026-08-14)
+**Repository**: https://github.com/88frank88/mqtt-app-v2
+**Letzter Stand**: Commit 95d00fb, Release v1.3.0
 
-## Recent Decisions
+## Wiedereinstieg (Resume)
+```bash
+cd <projekt>
+git pull origin main
+```
+Dann in opencode:
+- `/gsd-next` — GSD schlägt den nächsten Schritt vor
+- `/gsd-resume-work` — voller Kontext-Restore aus dieser Datei
+- Neue Anforderungen: `/gsd-capture` oder direkt Phase anlegen mit `/gsd-phase`
 
-### Decision 004: Font Management Architecture
-**Date**: 2026-08-13
-**Context**: Need embedded font system with single-file deployment support
-**Decision**: Implemented FontManager with PrivateFontCollection, memory pinning, and system font fallbacks
-**Rationale**: Provides reliable font loading with graceful degradation, meets offline/single-file requirements
-**Impact**: FontManager provides singleton access to JetBrains Mono and Inter fonts with Consolas/Segoe UI fallbacks
+## Architektur-Überblick (Stand v1.3.0)
 
-### Decision 005: Typography System Design
-**Date**: 2026-08-13
-**Context**: Establish consistent typography across application UI
-**Decision**: Extended DesignSystem with Typography nested class containing font constants and helper methods
-**Rationale**: Centralized typography management ensures consistency, provides convenient API for font access
-**Impact**: All UI components can access DesignSystem.Typography for consistent font sizing and families
+| Bereich | Dateien | Zweck |
+|---------|---------|-------|
+| UI | UI/MainForm.cs, UI/SettingsWindow.cs, UI/AutomationWindow.cs, UI/BaseForm.cs | Haupt-, Einstellungs- und Automatisierungsfenster, Dark-Mode-Basis |
+| Core | Core/DesignSystem.cs, Core/FontManager.cs, Core/Logger.cs, Core/VersionInfo.cs | Design-Konstanten, eingebettete Fonts, LOG/-Verzeichnis, Versionsanzeige |
+| MQTT | Services/ConnectionManager.cs, MqttPacketBuilder.cs, MqttPacketParser.cs, Models/MqttMessage.cs | Eigener MQTT-3.1.1-Client (TcpClient, zero dependencies) |
+| XML | Services/XmlConverter.cs | TExecution-XML-Generierung |
+| Persistenz | Services/SettingsPersistence.cs, Models/SettingsModel.cs | settings.ini ([Broker], [Betriebsmittel], [Automation]) |
 
-### Decision 001: Zero Dependency Policy
-**Date**: 2026-08-13
-**Context**: Application must be offline-capable for both build and runtime
-**Decision**: Implement all functionality in-house with zero NuGet dependencies
-**Rationale**: Ensures offline capability, reduces external dependencies, meets industrial environment requirements
-**Impact**: Custom MQTT implementation required, all libraries written from scratch
+## Wichtige Entscheidungen
 
-### Decision 002: Single File Deployment
-**Date**: 2026-08-13
-**Context**: Simplify deployment in offline industrial environments
-**Decision**: Use PublishSingleFile=true and SelfContained=true
-**Rationale**: Easier distribution, no DLL management, meets industrial IT requirements
-**Impact**: Build configuration set accordingly, all resources embedded
+### D001: Zero Dependencies
+Alle Funktionalität in-house (kein NuGet) — Offline-Fähigkeit für industrielle Umgebung.
 
-### Decision 003: Design System Colors
-**Date**: 2026-08-13
-**Context**: Establish consistent visual identity
-**Decision**: Dark mode #1a1d29 background, #ff5c5c coral accent
-**Rationale**: Modern industrial aesthetic, good contrast, professional appearance
-**Impact**: All UI components must follow this color scheme
+### D002: Single-File Deployment
+PublishSingleFile + SelfContained, Fonts embedded als Ressourcen.
 
-## Active Work Items
+### D003: Design System
+Dark Mode #1a1d29, Accent #ff5c5c (Koralle), JetBrains Mono + Inter.
 
-### Current Focus
-- Project structure setup
-- Build configuration validation
-- Development environment preparation
+### D006: TExecution-XML-Format (v1.2.0)
+- Payload beginnt exakt mit `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
+- Vollständige execution:TExecution-Struktur mit allen de-gmbh-Namespaces
+- Mapping: feature = PG-Nummer, requestTopic/responseTopic = Topic 1:1,
+  host/port = Broker-Settings, motorNr = globale 8-stellige Motor-Nummer,
+  id = neue GUID pro Publish
+- Vorlage: FAIL/XML.txt
 
-### Next Actions
-1. Continue with Phase 02-02: Extended Control Theming System
-2. Implement comprehensive control styling for 17+ WinForms control types
-3. Create ThemeManager for advanced theming capabilities
-4. Add spacing and layout constants to DesignSystem
+### D007: Publish-Workflow (v1.2.0)
+- Tabelle: Betriebsmittel-Dropdown (1-4) + freie PG-Nummer, max. 10 Zeilen
+- Publish veröffentlicht NUR die markierte Zeile (MultiSelect aus)
 
-## Pending Considerations
+### D008: Station-Nummer manuell (v1.3.0)
+- modul-Attribut kommt aus manuellem Feld "Station-Nummer (Modul)"
+  in Automation Parameter (station_number in settings.ini)
+- Automatische Topic-Extraktion entfernt (war fehlerhaft)
+- StationNumberParser gelöscht
 
-### Technical Considerations
-- MQTT 3.1.1 implementation approach
-- Settings storage format (JSON, XML, or binary)
-- XML schema design for PG numbers
-- Error handling strategy
+### D009: Version-Sync mit GitHub
+- .csproj (Version/AssemblyVersion/FileVersion) wird bei jedem Release
+  mit dem GitHub-Tag synchron gebumpt — vor `gh release create` pflegen!
+- Releases: v1.0.0 → v1.3.0 gepflegt
 
-### Design Considerations
-- Window navigation pattern
-- Settings validation rules
-- Station number parsing logic
-- Table data binding approach
+### D010: Logging (v1.0.2)
+- LOG/-Ordner neben der .exe, täglich rotierend (app_YYYY-MM-DD.log)
+- Level: DEBUG/INFO/WARNING/ERROR, Exceptions mit Stack-Trace
+- MQTT-Operationen, Font-Laden, Settings, Publish werden geloggt
 
-## Resources and References
+## settings.ini Struktur
+```ini
+[Broker]
+broker_address / broker_port / client_id / username / password
+[Betriebsmittel]
+betriebsmittel1-4_topic
+[Automation]
+motor_number (8-stellig) / station_number (=modul) / quitk / tv / ma /
+bauart / tool_position / connect_timeout / dmc
+```
 
-### Technical Specifications
-- MQTT 3.1.1 Protocol Specification
-- .NET 10 WinForms Documentation
-- Windows Application Guidelines
-- Industrial Automation Standards
+## Bekannte Punkte / Mögliche nächste Schritte
+- Produktiv-Test läuft — Rückmeldung von Frank ausstehen
+- Potenziell: README.md fürs Repository, verfeinerte Fehlerbehandlung,
+  QoS 1-Unterstützung, Reconnect-Logik
+- Phasen 1-5 der ursprünglichen Roadmap sind funktional abgedeckt
+  (Roadmap entspricht nicht mehr 1:1 dem implementierten Produkt)
 
-### Design Assets
-- JetBrains Mono Font License
-- Inter Font License
-- Color Palette Specifications
-- UI/UX Best Practices
-
-## Risk Assessment
-
-### Technical Risks
-- **Risk**: Custom MQTT implementation complexity
-- **Mitigation**: Start with core CONNECT/PUBLISH packets, expand incrementally
-- **Status**: Accepted
-
-### Project Risks
-- **Risk**: Offline build configuration complexity
-- **Mitigation**: Test build process early, document thoroughly
-- **Status**: Monitoring Required
-
-### Deployment Risks
-- **Risk**: Single file size limitations
-- **Mitigation**: Optimize resource embedding, compress where possible
-- **Status**: Accepted
-
-## Key Metrics
-
-### Development Metrics
-- **Phases Completed**: 1/9 (Phase 1: Foundation)
-- **Current Phase**: Phase 2 - Design System Implementation (Plan 1 of 3 completed)
-- **Requirements Defined**: 100%
-- **Design System**: Colors implemented, Typography implemented
-- **Architecture**: Foundation complete, design system in progress
-
-### Quality Metrics
-- **Code Coverage**: 0% (not started)
-- **Test Cases**: 0 (not started)
-- **Known Issues**: 0
-
-## Notes and Observations
-
-### Project Notes
-- This is a greenfield project with no legacy code
-- Industrial environment requires high reliability
-- Offline capability is non-negotiable requirement
-- Single executable deployment is preferred by IT department
-
-### Development Notes
-- Development can proceed incrementally
-- Protocol implementation can be tested independently
-- UI development can parallel protocol work
-- Integration should be planned carefully
-
-## Stakeholder Information
-
-### Primary Stakeholders
-- Industrial automation team
-- IT operations department
-- End users (operators)
-
-### Communication Channels
-- Project status updates via team meetings
-- Technical decisions documented in this file
-- Requirements clarified with stakeholders
-
-## Version History
-
-### Version 1.0 (2026-08-13)
-- Project initialized
-- Requirements documented
-- Roadmap created
-- Design system specified
-- Technical constraints defined
-
-## Next Update
-**Scheduled**: After Phase 1 completion
-**Focus**: Build configuration validation, development environment setup status
+## Build & Deployment
+```bash
+dotnet publish -c Release -r win-x64 --self-contained true
+# Ergebnis: bin/Release/net10.0-windows/win-x64/publish/BetriebsmittelPublisher.exe
+```
+Kein dotnet auf dem Entwicklungsserver verfügbar — Builds finden auf
+Franks Windows-Maschine statt. Globale Git-Config ist gesetzt
+(user.name=Frank, defaultBranch=main, excludesfile=~/.gitignore_global).
