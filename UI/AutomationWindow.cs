@@ -513,11 +513,10 @@ namespace BetriebsmittelPublisher.UI
                     return;
                 }
 
-                var modul = XmlConverter.ExtractModuleFromTopic(topic);
+                var modul = _settings.StationNumber.Trim();
                 if (string.IsNullOrEmpty(modul))
                 {
-                    row.Cells["Status"].Value = "ungueltiges Topic";
-                    MessageBox.Show($"Topic '{topic}' enthaelt kein Modul (3. Segment).\nErwartetes Format: xxxx/xx/MODUL/...", "Ungueltiges Topic", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Keine Station-Nummer (Modul) konfiguriert.\nBitte in den Einstellungen unter 'Automation Parameter' eintragen.", "Keine Station", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -533,6 +532,7 @@ namespace BetriebsmittelPublisher.UI
                     PgNumber = pgNumber,
                     Topic = topic,
                     MotorNumber = motorNumber,
+                    Modul = modul,
                     Host = _settings.BrokerAddress,
                     Port = _settings.BrokerPort.ToString(),
                     Quitk = _settings.Quitk,

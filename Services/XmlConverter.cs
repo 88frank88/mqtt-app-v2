@@ -11,6 +11,7 @@ namespace BetriebsmittelPublisher.Services
         public string PgNumber { get; set; } = string.Empty;
         public string Topic { get; set; } = string.Empty;
         public string MotorNumber { get; set; } = string.Empty;
+        public string Modul { get; set; } = string.Empty;
         public string Host { get; set; } = string.Empty;
         public string Port { get; set; } = string.Empty;
         public string Quitk { get; set; } = "R";
@@ -24,19 +25,6 @@ namespace BetriebsmittelPublisher.Services
 
     public class XmlConverter
     {
-        public static string ExtractModuleFromTopic(string topic)
-        {
-            if (string.IsNullOrWhiteSpace(topic))
-                return string.Empty;
-
-            var segments = topic.Split('/');
-            // "0012/27/43/70027043/ZAE/SCR/Req" -> Segment 3 (Index 2) = "43"
-            if (segments.Length >= 3)
-                return segments[2].Trim();
-
-            return string.Empty;
-        }
-
         public string GenerateExecutionXml(ExecutionXmlData data)
         {
             var settings = new XmlWriterSettings
@@ -90,7 +78,7 @@ namespace BetriebsmittelPublisher.Services
 
                 xmlWriter.WriteStartElement("task", ns);
                 xmlWriter.WriteAttributeString("id", Guid.NewGuid().ToString());
-                xmlWriter.WriteAttributeString("modul", ExtractModuleFromTopic(data.Topic));
+                xmlWriter.WriteAttributeString("modul", data.Modul);
                 xmlWriter.WriteAttributeString("toolPosition", data.ToolPosition);
                 xmlWriter.WriteAttributeString("feature", data.PgNumber);
 

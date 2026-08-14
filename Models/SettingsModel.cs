@@ -14,6 +14,7 @@ namespace BetriebsmittelPublisher.Models
         public string Betriebsmittel4Topic { get; set; } = "procon/bm4/data";
 
         public string MotorNumber { get; set; } = "";
+        public string StationNumber { get; set; } = "";
         public string Quitk { get; set; } = "R";
         public string Tv { get; set; } = "37191";
         public string Ma { get; set; } = "0004808061";
@@ -21,10 +22,5 @@ namespace BetriebsmittelPublisher.Models
         public string ToolPosition { get; set; } = "1";
         public string ConnectTimeout { get; set; } = "10000";
         public string Dmc { get; set; } = "";
-
-        public int? StationNumber1 => Services.StationNumberParser.ExtractStationNumber(Betriebsmittel1Topic);
-        public int? StationNumber2 => Services.StationNumberParser.ExtractStationNumber(Betriebsmittel2Topic);
-        public int? StationNumber3 => Services.StationNumberParser.ExtractStationNumber(Betriebsmittel3Topic);
-        public int? StationNumber4 => Services.StationNumberParser.ExtractStationNumber(Betriebsmittel4Topic);
     }
 }

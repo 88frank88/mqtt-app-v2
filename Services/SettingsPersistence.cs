@@ -71,6 +71,9 @@ namespace BetriebsmittelPublisher.Services
                         case "motor_number":
                             settings.MotorNumber = value;
                             break;
+                        case "station_number":
+                            settings.StationNumber = value;
+                            break;
                         case "quitk":
                             settings.Quitk = value;
                             break;
@@ -123,6 +126,7 @@ namespace BetriebsmittelPublisher.Services
                              $"betriebsmittel4_topic={settings.Betriebsmittel4Topic}\n" +
                              $"[Automation]\n" +
                              $"motor_number={settings.MotorNumber}\n" +
+                             $"station_number={settings.StationNumber}\n" +
                              $"quitk={settings.Quitk}\n" +
                              $"tv={settings.Tv}\n" +
                              $"ma={settings.Ma}\n" +

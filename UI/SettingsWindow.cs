@@ -19,6 +19,7 @@ namespace BetriebsmittelPublisher.UI
         private Label _connectionTestLabel = null!;
 
         private TextBox _motorNumberTextBox = null!;
+        private TextBox _stationNumberTextBox = null!;
         private TextBox _quitkTextBox = null!;
         private TextBox _tvTextBox = null!;
         private TextBox _maTextBox = null!;
@@ -31,10 +32,6 @@ namespace BetriebsmittelPublisher.UI
         private TextBox _topic2TextBox = null!;
         private TextBox _topic3TextBox = null!;
         private TextBox _topic4TextBox = null!;
-        private Label _station1Label = null!;
-        private Label _station2Label = null!;
-        private Label _station3Label = null!;
-        private Label _station4Label = null!;
         private Button _saveButton = null!;
         private Button _cancelButton = null!;
         private Label _validationLabel = null!;
@@ -140,13 +137,13 @@ namespace BetriebsmittelPublisher.UI
             mainPanel.SetColumnSpan(topicHeading, 2);
             mainPanel.RowCount++;
 
-            CreateTopicInputGroup(mainPanel, mainPanel.RowCount, "Betriebsmittel 1:", out _topic1TextBox, out _station1Label);
+            CreateTopicInputGroup(mainPanel, mainPanel.RowCount, "Betriebsmittel 1:", out _topic1TextBox);
             mainPanel.RowCount++;
-            CreateTopicInputGroup(mainPanel, mainPanel.RowCount, "Betriebsmittel 2:", out _topic2TextBox, out _station2Label);
+            CreateTopicInputGroup(mainPanel, mainPanel.RowCount, "Betriebsmittel 2:", out _topic2TextBox);
             mainPanel.RowCount++;
-            CreateTopicInputGroup(mainPanel, mainPanel.RowCount, "Betriebsmittel 3:", out _topic3TextBox, out _station3Label);
+            CreateTopicInputGroup(mainPanel, mainPanel.RowCount, "Betriebsmittel 3:", out _topic3TextBox);
             mainPanel.RowCount++;
-            CreateTopicInputGroup(mainPanel, mainPanel.RowCount, "Betriebsmittel 4:", out _topic4TextBox, out _station4Label);
+            CreateTopicInputGroup(mainPanel, mainPanel.RowCount, "Betriebsmittel 4:", out _topic4TextBox);
             mainPanel.RowCount++;
 
             // === Automation Section ===
@@ -160,6 +157,11 @@ namespace BetriebsmittelPublisher.UI
             _motorNumberTextBox = CreateTextBox(200);
             _motorNumberTextBox.MaxLength = 8;
             mainPanel.Controls.Add(_motorNumberTextBox, 1, mainPanel.RowCount);
+            mainPanel.RowCount++;
+
+            mainPanel.Controls.Add(CreateFieldLabel("Station-Nummer (Modul):"), 0, mainPanel.RowCount);
+            _stationNumberTextBox = CreateTextBox(200);
+            mainPanel.Controls.Add(_stationNumberTextBox, 1, mainPanel.RowCount);
             mainPanel.RowCount++;
 
             mainPanel.Controls.Add(CreateFieldLabel("QUITK:"), 0, mainPanel.RowCount);
@@ -294,41 +296,13 @@ namespace BetriebsmittelPublisher.UI
         }
 
         private void CreateTopicInputGroup(TableLayoutPanel parent, int rowIndex, string labelText,
-            out TextBox textBox, out Label stationLabel)
+            out TextBox textBox)
         {
             var label = CreateFieldLabel(labelText);
             parent.Controls.Add(label, 0, rowIndex);
 
-            var groupPanel = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.TopDown,
-                Height = 60
-            };
-
             textBox = CreateTextBox(420);
-            groupPanel.Controls.Add(textBox);
-
-            stationLabel = new Label
-            {
-                Text = "Station: -",
-                Font = DesignSystem.Typography.GetSansFont(8),
-                ForeColor = DesignSystem.Colors.TextSecondary,
-                Height = 20
-            };
-            groupPanel.Controls.Add(stationLabel);
-
-            parent.Controls.Add(groupPanel, 1, rowIndex);
-
-            var localTextBox = textBox;
-            var localLabel = stationLabel;
-            localTextBox.TextChanged += (s, e) => UpdateStationNumber(localTextBox, localLabel);
-        }
-
-        private void UpdateStationNumber(TextBox textBox, Label stationLabel)
-        {
-            var stationNumber = StationNumberParser.ExtractStationNumber(textBox.Text);
-            stationLabel.Text = stationNumber.HasValue ? $"Station: {stationNumber.Value}" : "Station: -";
+            parent.Controls.Add(textBox, 1, rowIndex);
         }
 
         private async void TestConnectionButton_Click(object? sender, EventArgs e)
@@ -428,6 +402,7 @@ namespace BetriebsmittelPublisher.UI
             _topic4TextBox.Text = _settings.Betriebsmittel4Topic;
 
             _motorNumberTextBox.Text = _settings.MotorNumber;
+            _stationNumberTextBox.Text = _settings.StationNumber;
             _quitkTextBox.Text = _settings.Quitk;
             _tvTextBox.Text = _settings.Tv;
             _maTextBox.Text = _settings.Ma;
@@ -435,11 +410,6 @@ namespace BetriebsmittelPublisher.UI
             _toolPositionTextBox.Text = _settings.ToolPosition;
             _connectTimeoutTextBox.Text = _settings.ConnectTimeout;
             _dmcTextBox.Text = _settings.Dmc;
-
-            UpdateStationNumber(_topic1TextBox, _station1Label);
-            UpdateStationNumber(_topic2TextBox, _station2Label);
-            UpdateStationNumber(_topic3TextBox, _station3Label);
-            UpdateStationNumber(_topic4TextBox, _station4Label);
 
             ValidateInput(null, EventArgs.Empty);
         }
@@ -473,6 +443,7 @@ namespace BetriebsmittelPublisher.UI
             _settings.Betriebsmittel4Topic = _topic4TextBox.Text;
 
             _settings.MotorNumber = _motorNumberTextBox.Text.Trim();
+            _settings.StationNumber = _stationNumberTextBox.Text.Trim();
             _settings.Quitk = _quitkTextBox.Text.Trim();
             _settings.Tv = _tvTextBox.Text.Trim();
             _settings.Ma = _maTextBox.Text.Trim();
