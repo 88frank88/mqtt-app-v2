@@ -8,10 +8,10 @@ namespace BetriebsmittelPublisher.UI
 {
     public class MainForm : BaseForm
     {
-        private Button _settingsButton;
-        private Button _automationButton;
-        private AutomationWindow _automationWindow;
-        private ConnectionManager _connectionManager;
+        private Button _settingsButton = null!;
+        private Button _automationButton = null!;
+        private AutomationWindow? _automationWindow;
+        private readonly ConnectionManager _connectionManager;
 
         public MainForm()
         {
@@ -49,7 +49,7 @@ namespace BetriebsmittelPublisher.UI
             Controls.Add(_automationButton);
         }
 
-        private void SettingsButton_Click(object sender, EventArgs e)
+        private void SettingsButton_Click(object? sender, EventArgs e)
         {
             using (var settingsWindow = new SettingsWindow())
             {
@@ -57,7 +57,7 @@ namespace BetriebsmittelPublisher.UI
             }
         }
 
-        private void AutomationButton_Click(object sender, EventArgs e)
+        private void AutomationButton_Click(object? sender, EventArgs e)
         {
             if (_automationWindow == null || _automationWindow.IsDisposed)
             {

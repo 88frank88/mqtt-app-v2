@@ -9,16 +9,16 @@ namespace BetriebsmittelPublisher.UI
 {
     public class AutomationWindow : BaseForm
     {
-        private PgAutomationModel _model;
-        private PgNumberGenerator _generator;
-        private XmlConverter _xmlConverter;
-        private TextBox _motorNumberInput;
-        private DataGridView _dataGrid;
-        private Button _generateButton;
-        private Button _publishButton;
-        private Button _clearButton;
-        private Label _connectionStatus;
-        private Services.ConnectionManager _connectionManager;
+        private PgAutomationModel _model = null!;
+        private PgNumberGenerator _generator = null!;
+        private XmlConverter _xmlConverter = null!;
+        private TextBox _motorNumberInput = null!;
+        private DataGridView _dataGrid = null!;
+        private Button _generateButton = null!;
+        private Button _publishButton = null!;
+        private Button _clearButton = null!;
+        private Label _connectionStatus = null!;
+        private readonly Services.ConnectionManager _connectionManager;
 
         public AutomationWindow(Services.ConnectionManager connectionManager)
         {
@@ -271,7 +271,7 @@ namespace BetriebsmittelPublisher.UI
             }
         }
 
-        private void Model_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private void Model_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(PgAutomationModel.TableRows))
             {
@@ -285,7 +285,7 @@ namespace BetriebsmittelPublisher.UI
             _dataGrid.DataSource = _model.TableRows;
         }
 
-        private void DataGrid_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        private void DataGrid_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
         {
             if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
             {
@@ -315,11 +315,11 @@ namespace BetriebsmittelPublisher.UI
             }
         }
 
-        private void GenerateButton_Click(object sender, EventArgs e)
+        private void GenerateButton_Click(object? sender, EventArgs e)
         {
-            if (!_model.ValidateMotorNumber(out string error))
+            if (!_model.ValidateMotorNumber(out string? error))
             {
-                MessageBox.Show(error, "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(error ?? "Invalid motor number", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -332,13 +332,13 @@ namespace BetriebsmittelPublisher.UI
                 _model.TableRows[i].PgNumber = pgNumbers[i];
                 _model.TableRows[i].Status = "generated";
                 _model.TableRows[i].Timestamp = DateTime.Now;
-                _model.TableRows[i].Error = null;
+                _model.TableRows[i].Error = string.Empty;
             }
 
             UpdateTableRows();
         }
 
-        private void PublishButton_Click(object sender, EventArgs e)
+        private void PublishButton_Click(object? sender, EventArgs e)
         {
             try
             {
@@ -346,11 +346,11 @@ namespace BetriebsmittelPublisher.UI
 
                 if (_connectionManager != null && _connectionManager.IsConnected)
                 {
-                    var message = new Services.MqttMessage
+                    var message = new MqttMessage
                     {
                         Topic = "betriebsmittel/pg-numbers",
-                        Payload = xml,
-                        Qos = 0
+                        Payload = System.Text.Encoding.UTF8.GetBytes(xml),
+                        QoS = MqttQoS.AtMostOnce
                     };
 
                     _connectionManager.Publish(message);
@@ -377,7 +377,7 @@ namespace BetriebsmittelPublisher.UI
             }
         }
 
-        private void ClearButton_Click(object sender, EventArgs e)
+        private void ClearButton_Click(object? sender, EventArgs e)
         {
             _model.ClearTable();
             _motorNumberInput.Text = string.Empty;

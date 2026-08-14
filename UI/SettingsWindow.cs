@@ -10,17 +10,17 @@ namespace BetriebsmittelPublisher.UI
 {
     public class SettingsWindow : BaseForm
     {
-        private TextBox _topic1TextBox;
-        private TextBox _topic2TextBox;
-        private TextBox _topic3TextBox;
-        private TextBox _topic4TextBox;
-        private Label _station1Label;
-        private Label _station2Label;
-        private Label _station3Label;
-        private Label _station4Label;
-        private Button _saveButton;
-        private Button _cancelButton;
-        private Label _validationLabel;
+        private TextBox _topic1TextBox = null!;
+        private TextBox _topic2TextBox = null!;
+        private TextBox _topic3TextBox = null!;
+        private TextBox _topic4TextBox = null!;
+        private Label _station1Label = null!;
+        private Label _station2Label = null!;
+        private Label _station3Label = null!;
+        private Label _station4Label = null!;
+        private Button _saveButton = null!;
+        private Button _cancelButton = null!;
+        private Label _validationLabel = null!;
 
         private readonly SettingsModel _settings;
 
@@ -211,7 +211,7 @@ namespace BetriebsmittelPublisher.UI
             ValidateInput(null, EventArgs.Empty);
         }
 
-        private void SaveButton_Click(object sender, EventArgs e)
+        private void SaveButton_Click(object? sender, EventArgs e)
         {
             if (!ValidateTopic(_topic1TextBox.Text) ||
                 !ValidateTopic(_topic2TextBox.Text) ||

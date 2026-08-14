@@ -27,8 +27,8 @@ namespace BetriebsmittelPublisher.Models
 
     public class MqttMessage
     {
-        public string Topic { get; set; }
-        public byte[] Payload { get; set; }
+        public string Topic { get; set; } = string.Empty;
+        public byte[] Payload { get; set; } = Array.Empty<byte>();
         public MqttQoS QoS { get; set; }
         public ushort PacketId { get; set; }
         public bool Retain { get; set; }
@@ -37,9 +37,9 @@ namespace BetriebsmittelPublisher.Models
 
     public class MqttConnectMessage
     {
-        public string ClientId { get; set; }
-        public string Username { get; set; }
-        public string Password { get; set; }
+        public string ClientId { get; set; } = string.Empty;
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
         public ushort KeepAlive { get; set; }
         public bool CleanSession { get; set; } = true;
     }
