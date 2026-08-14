@@ -32,29 +32,10 @@ namespace BetriebsmittelPublisher.Core
 
         public static class Fonts
         {
-            public static class Headline
-            {
-                public static readonly Font Instance = Typography.GetSansFont(12.0f, FontStyle.Bold);
-                public static implicit operator Font(Headline headline) => Instance;
-            }
-
-            public static class Body
-            {
-                public static readonly Font Instance = Typography.GetSansFont(9.5f);
-                public static implicit operator Font(Body body) => Instance;
-            }
-
-            public static class Caption
-            {
-                public static readonly Font Instance = Typography.GetSansFont(8.0f);
-                public static implicit operator Font(Caption caption) => Instance;
-            }
-
-            public static class Monospace
-            {
-                public static readonly Font Instance = Typography.GetMonoFont(9.0f);
-                public static implicit operator Font(Monospace mono) => Instance;
-            }
+            public static Font Headline => Typography.GetSansFont(12.0f, FontStyle.Bold);
+            public static Font Body => Typography.GetSansFont(9.5f);
+            public static Font Caption => Typography.GetSansFont(8.0f);
+            public static Font Monospace => Typography.GetMonoFont(9.0f);
         }
 
         public static class Typography
