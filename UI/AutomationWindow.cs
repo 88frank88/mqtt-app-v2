@@ -319,12 +319,15 @@ namespace BetriebsmittelPublisher.UI
         {
             if (!_model.ValidateMotorNumber(out string? error))
             {
+                Logger.Warning($"Ungueltige Motor-Nummer: {_model.MotorNumber}");
                 MessageBox.Show(error ?? "Invalid motor number", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
             int motorNumber = int.Parse(_model.MotorNumber);
+            Logger.Info($"Generiere PG-Nummern fuer Motor: {motorNumber}");
             var pgNumbers = _generator.GeneratePgNumbers(motorNumber, 10);
+            Logger.Info($"{pgNumbers.Length} PG-Nummern generiert");
 
             for (int i = 0; i < _model.TableRows.Count && i < pgNumbers.Length; i++)
             {
@@ -343,6 +346,7 @@ namespace BetriebsmittelPublisher.UI
             try
             {
                 var xml = _xmlConverter.GenerateXml(_model.TableRows);
+                Logger.Info($"XML generiert ({xml.Length} bytes)");
 
                 if (_connectionManager != null && _connectionManager.IsConnected)
                 {
@@ -364,16 +368,19 @@ namespace BetriebsmittelPublisher.UI
                     }
 
                     UpdateTableRows();
-                    MessageBox.Show("XML published successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    Logger.Info("XML erfolgreich veroeffentlicht");
+                    MessageBox.Show("XML erfolgreich veroeffentlicht", "Erfolg", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
-                    MessageBox.Show("Not connected to MQTT broker. Please connect first.", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Logger.Warning("Publish-Versuch ohne MQTT-Verbindung");
+                    MessageBox.Show("Nicht mit MQTT-Broker verbunden. Bitte zuerst verbinden.", "Verbindungsfehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error publishing XML: {ex.Message}", "Publish Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Logger.Error("Fehler beim Veroeffentlichen des XML", ex);
+                MessageBox.Show($"Fehler beim Veroeffentlichen: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

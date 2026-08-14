@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using BetriebsmittelPublisher.Models;
+using BetriebsmittelPublisher.Core;
 
 namespace BetriebsmittelPublisher.Services
 {
@@ -15,8 +16,13 @@ namespace BetriebsmittelPublisher.Services
         {
             var settings = new SettingsModel();
 
+            Logger.Info($"Lade Einstellungen von: {SettingsFilePath}");
+
             if (!File.Exists(SettingsFilePath))
+            {
+                Logger.Info("Keine settings.ini gefunden - verwende Standardwerte");
                 return settings;
+            }
 
             try
             {
@@ -48,11 +54,11 @@ namespace BetriebsmittelPublisher.Services
                             break;
                     }
                 }
+                Logger.Info("Einstellungen erfolgreich geladen");
             }
             catch (Exception ex)
             {
-                // Log error but return defaults
-                Console.WriteLine($"Error loading settings: {ex.Message}");
+                Logger.Error("Fehler beim Laden der Einstellungen", ex);
             }
 
             return settings;
@@ -62,6 +68,8 @@ namespace BetriebsmittelPublisher.Services
         {
             try
             {
+                Logger.Info($"Speichere Einstellungen nach: {SettingsFilePath}");
+
                 var content = $"[Betriebsmittel]\n" +
                              $"betriebsmittel1_topic={settings.Betriebsmittel1Topic}\n" +
                              $"betriebsmittel2_topic={settings.Betriebsmittel2Topic}\n" +
@@ -69,11 +77,12 @@ namespace BetriebsmittelPublisher.Services
                              $"betriebsmittel4_topic={settings.Betriebsmittel4Topic}\n";
 
                 File.WriteAllText(SettingsFilePath, content);
+                Logger.Info("Einstellungen erfolgreich gespeichert");
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error saving settings: {ex.Message}");
+                Logger.Error("Fehler beim Speichern der Einstellungen", ex);
                 return false;
             }
         }

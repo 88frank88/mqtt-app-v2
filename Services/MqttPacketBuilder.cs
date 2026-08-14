@@ -108,6 +108,17 @@ namespace BetriebsmittelPublisher.Services
             return fullPacket;
         }
 
+        public static byte[] BuildPublishPacket(string topic, byte[] payload, Models.MqttQoS qos = Models.MqttQoS.AtMostOnce)
+        {
+            var message = new Models.MqttPublishMessage
+            {
+                Topic = topic,
+                Payload = payload ?? Array.Empty<byte>(),
+                QoS = qos
+            };
+            return BuildPublishPacket(message);
+        }
+
         public static byte[] BuildPingReqPacket()
         {
             // PINGREQ has no variable header or payload

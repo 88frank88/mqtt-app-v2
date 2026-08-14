@@ -22,19 +22,21 @@ namespace BetriebsmittelPublisher.Core
             {
                 _privateFontCollection = new PrivateFontCollection();
 
-                // Load JetBrains Mono fonts
+                Logger.Info("Lade JetBrains Mono Font...");
                 _jetBrainsMonoFamily = LoadFontFromResource("BetriebsmittelPublisher.Resources.JetBrainsMono-Regular.ttf");
-                
-                // Load Inter fonts
+                Logger.Info(_jetBrainsMonoFamily != null ? "JetBrains Mono erfolgreich geladen" : "JetBrains Mono nicht gefunden - verwende Fallback");
+
+                Logger.Info("Lade Inter Font...");
                 _interFamily = LoadFontFromResource("BetriebsmittelPublisher.Resources.Inter-Regular.ttf");
+                Logger.Info(_interFamily != null ? "Inter erfolgreich geladen" : "Inter nicht gefunden - verwende Fallback");
 
                 _initialized = true;
+                Logger.Info("FontManager initialisiert");
             }
             catch (Exception ex)
             {
-                // Log error but don't fail - fallback to system fonts
-                System.Diagnostics.Debug.WriteLine($"Font loading failed: {ex.Message}");
-                _initialized = true; // Mark as initialized even if fonts failed
+                Logger.Error("Font loading failed", ex);
+                _initialized = true;
             }
         }
 

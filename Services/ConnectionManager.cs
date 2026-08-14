@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using BetriebsmittelPublisher.Models;
+using BetriebsmittelPublisher.Core;
 
 namespace BetriebsmittelPublisher.Services
 {
@@ -24,13 +25,16 @@ namespace BetriebsmittelPublisher.Services
 
             try
             {
+                Logger.Info($"Verbinde zu MQTT Broker: {host}:{port}...");
                 _tcpClient = new TcpClient();
                 await _tcpClient.ConnectAsync(host, port).ConfigureAwait(false);
                 _networkStream = _tcpClient.GetStream();
                 IsConnected = true;
+                Logger.Info($"Verbunden mit {host}:{port}");
             }
             catch (Exception ex)
             {
+                Logger.Error($"Verbindung zu {host}:{port} fehlgeschlagen", ex);
                 Cleanup();
                 throw new InvalidOperationException($"Failed to connect to {host}:{port}", ex);
             }
@@ -145,13 +149,23 @@ namespace BetriebsmittelPublisher.Services
             if (!IsConnected)
                 throw new InvalidOperationException("Not connected");
 
+            Logger.Info($"Publish zu Topic: {message.Topic} ({message.Payload.Length} bytes)");
             var packet = MqttPacketBuilder.BuildPublishPacket(message.Topic, message.Payload, message.QoS);
             await SendPacketAsync(packet, cancellationToken).ConfigureAwait(false);
+            Logger.Info($"Publish erfolgreich: {message.Topic}");
         }
 
         public void Publish(MqttMessage message)
         {
-            PublishAsync(message, default).GetAwaiter().GetResult();
+            try
+            {
+                PublishAsync(message, default).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Publish fehlgeschlagen", ex);
+                throw;
+            }
         }
 
         private void Cleanup()

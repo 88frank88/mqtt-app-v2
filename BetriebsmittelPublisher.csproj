@@ -27,4 +27,9 @@
     <EmbeddedResource Include="Resources\Inter-Bold.ttf" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="LOG\**\*" />
+    <None Include="LOG\**\*.log" />
+  </ItemGroup>
+
 </Project>
