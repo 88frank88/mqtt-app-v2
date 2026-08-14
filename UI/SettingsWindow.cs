@@ -10,6 +10,14 @@ namespace BetriebsmittelPublisher.UI
 {
     public class SettingsWindow : BaseForm
     {
+        private TextBox _brokerAddressTextBox = null!;
+        private NumericUpDown _brokerPortNumeric = null!;
+        private TextBox _clientIdTextBox = null!;
+        private TextBox _usernameTextBox = null!;
+        private TextBox _passwordTextBox = null!;
+        private Button _testConnectionButton = null!;
+        private Label _connectionTestLabel = null!;
+
         private TextBox _topic1TextBox = null!;
         private TextBox _topic2TextBox = null!;
         private TextBox _topic3TextBox = null!;
@@ -33,56 +41,117 @@ namespace BetriebsmittelPublisher.UI
 
         private void InitializeComponent()
         {
-            this.Text = $"Settings - {Core.VersionInfo.ShortInfo}";
-            this.Size = new Size(600, 500);
+            this.Text = $"Einstellungen - {Core.VersionInfo.ShortInfo}";
+            this.Size = new Size(650, 860);
             this.StartPosition = FormStartPosition.CenterParent;
+
+            var scrollPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
 
             var mainPanel = new TableLayoutPanel
             {
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
+                AutoSize = true,
                 Padding = new Padding(20),
-                RowCount = 7,
                 ColumnCount = 2
             };
-
-            mainPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-            mainPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
-            mainPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
-            mainPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
-            mainPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
-            mainPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            mainPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             mainPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
             mainPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-            var headingLabel = new Label
+            // === Broker Section ===
+            var brokerHeading = CreateHeading("MQTT Broker");
+            mainPanel.Controls.Add(brokerHeading, 0, mainPanel.RowCount);
+            mainPanel.SetColumnSpan(brokerHeading, 2);
+            mainPanel.RowCount++;
+
+            mainPanel.Controls.Add(CreateFieldLabel("Broker-Adresse:"), 0, mainPanel.RowCount);
+            _brokerAddressTextBox = CreateTextBox(300);
+            mainPanel.Controls.Add(_brokerAddressTextBox, 1, mainPanel.RowCount);
+            mainPanel.RowCount++;
+
+            mainPanel.Controls.Add(CreateFieldLabel("Port:"), 0, mainPanel.RowCount);
+            _brokerPortNumeric = new NumericUpDown
             {
-                Text = "MQTT Topic Configuration",
-                Font = DesignSystem.Typography.GetSansFont(12, FontStyle.Bold),
+                Width = 100,
+                Minimum = 1,
+                Maximum = 65535,
+                Value = 1883,
+                BackColor = DesignSystem.Colors.ControlBackground,
                 ForeColor = DesignSystem.Colors.TextPrimary,
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleLeft
+                BorderStyle = BorderStyle.FixedSingle,
+                Font = DesignSystem.Typography.GetMonoFont(9)
             };
-            mainPanel.Controls.Add(headingLabel, 0, 0);
-            mainPanel.SetColumnSpan(headingLabel, 2);
+            mainPanel.Controls.Add(_brokerPortNumeric, 1, mainPanel.RowCount);
+            mainPanel.RowCount++;
 
-            CreateTopicInputGroup(mainPanel, 1, "Betriebsmittel 1:", out _topic1TextBox, out _station1Label);
-            CreateTopicInputGroup(mainPanel, 2, "Betriebsmittel 2:", out _topic2TextBox, out _station2Label);
-            CreateTopicInputGroup(mainPanel, 3, "Betriebsmittel 3:", out _topic3TextBox, out _station3Label);
-            CreateTopicInputGroup(mainPanel, 4, "Betriebsmittel 4:", out _topic4TextBox, out _station4Label);
+            mainPanel.Controls.Add(CreateFieldLabel("Client-ID:"), 0, mainPanel.RowCount);
+            _clientIdTextBox = CreateTextBox(300);
+            mainPanel.Controls.Add(_clientIdTextBox, 1, mainPanel.RowCount);
+            mainPanel.RowCount++;
 
+            mainPanel.Controls.Add(CreateFieldLabel("Benutzername:"), 0, mainPanel.RowCount);
+            _usernameTextBox = CreateTextBox(300);
+            mainPanel.Controls.Add(_usernameTextBox, 1, mainPanel.RowCount);
+            mainPanel.RowCount++;
+
+            mainPanel.Controls.Add(CreateFieldLabel("Passwort:"), 0, mainPanel.RowCount);
+            _passwordTextBox = CreateTextBox(300);
+            _passwordTextBox.UseSystemPasswordChar = true;
+            mainPanel.Controls.Add(_passwordTextBox, 1, mainPanel.RowCount);
+            mainPanel.RowCount++;
+
+            // Test connection button + result label
+            mainPanel.Controls.Add(CreateFieldLabel(""), 0, mainPanel.RowCount);
+            var testPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, Height = 35, WrapContents = false };
+            _testConnectionButton = new Button
+            {
+                Text = "Verbindung testen",
+                Size = new Size(150, 30),
+                BackColor = DesignSystem.Colors.ControlBackground,
+                ForeColor = DesignSystem.Colors.TextPrimary,
+                FlatStyle = FlatStyle.Flat
+            };
+            _testConnectionButton.Click += TestConnectionButton_Click;
+            testPanel.Controls.Add(_testConnectionButton);
+
+            _connectionTestLabel = new Label
+            {
+                Text = "",
+                AutoSize = true,
+                ForeColor = DesignSystem.Colors.TextSecondary,
+                Padding = new Padding(10, 5, 0, 0)
+            };
+            testPanel.Controls.Add(_connectionTestLabel);
+            mainPanel.Controls.Add(testPanel, 1, mainPanel.RowCount);
+            mainPanel.RowCount++;
+
+            // === Topics Section ===
+            var topicHeading = CreateHeading("MQTT Topics (Betriebsmittel)");
+            mainPanel.Controls.Add(topicHeading, 0, mainPanel.RowCount);
+            mainPanel.SetColumnSpan(topicHeading, 2);
+            mainPanel.RowCount++;
+
+            CreateTopicInputGroup(mainPanel, mainPanel.RowCount, "Betriebsmittel 1:", out _topic1TextBox, out _station1Label);
+            mainPanel.RowCount++;
+            CreateTopicInputGroup(mainPanel, mainPanel.RowCount, "Betriebsmittel 2:", out _topic2TextBox, out _station2Label);
+            mainPanel.RowCount++;
+            CreateTopicInputGroup(mainPanel, mainPanel.RowCount, "Betriebsmittel 3:", out _topic3TextBox, out _station3Label);
+            mainPanel.RowCount++;
+            CreateTopicInputGroup(mainPanel, mainPanel.RowCount, "Betriebsmittel 4:", out _topic4TextBox, out _station4Label);
+            mainPanel.RowCount++;
+
+            // === Buttons ===
             var buttonPanel = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.RightToLeft,
-                Height = 40
+                Height = 45
             };
 
             _saveButton = new Button
             {
-                Text = "Save",
-                Size = new Size(100, 30),
+                Text = "Speichern",
+                Size = new Size(110, 32),
                 BackColor = DesignSystem.Colors.Accent,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -93,8 +162,8 @@ namespace BetriebsmittelPublisher.UI
 
             _cancelButton = new Button
             {
-                Text = "Cancel",
-                Size = new Size(100, 30),
+                Text = "Abbrechen",
+                Size = new Size(110, 32),
                 BackColor = DesignSystem.Colors.ControlBackground,
                 ForeColor = DesignSystem.Colors.TextPrimary,
                 FlatStyle = FlatStyle.Flat,
@@ -102,8 +171,10 @@ namespace BetriebsmittelPublisher.UI
             };
             buttonPanel.Controls.Add(_cancelButton);
 
-            mainPanel.Controls.Add(buttonPanel, 0, 5);
+            mainPanel.Controls.Add(CreateFieldLabel(""), 0, mainPanel.RowCount);
+            mainPanel.Controls.Add(buttonPanel, 1, mainPanel.RowCount);
             mainPanel.SetColumnSpan(buttonPanel, 2);
+            mainPanel.RowCount++;
 
             _validationLabel = new Label
             {
@@ -112,28 +183,63 @@ namespace BetriebsmittelPublisher.UI
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleLeft
             };
-            mainPanel.Controls.Add(_validationLabel, 0, 6);
+            mainPanel.Controls.Add(_validationLabel, 0, mainPanel.RowCount);
             mainPanel.SetColumnSpan(_validationLabel, 2);
 
-            this.Controls.Add(mainPanel);
+            scrollPanel.Controls.Add(mainPanel);
+            this.Controls.Add(scrollPanel);
 
             _topic1TextBox.TextChanged += ValidateInput;
             _topic2TextBox.TextChanged += ValidateInput;
             _topic3TextBox.TextChanged += ValidateInput;
             _topic4TextBox.TextChanged += ValidateInput;
+            _brokerAddressTextBox.TextChanged += ValidateInput;
         }
 
-        private void CreateTopicInputGroup(TableLayoutPanel parent, int rowIndex, string labelText, 
-            out TextBox textBox, out Label stationLabel)
+        private Label CreateHeading(string text)
         {
-            var label = new Label
+            return new Label
             {
-                Text = labelText,
+                Text = text,
+                Font = DesignSystem.Typography.GetSansFont(12, FontStyle.Bold),
+                ForeColor = DesignSystem.Colors.TextPrimary,
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Height = 35,
+                Margin = new Padding(0, 15, 0, 5)
+            };
+        }
+
+        private Label CreateFieldLabel(string text)
+        {
+            return new Label
+            {
+                Text = text,
                 Font = DesignSystem.Typography.GetSansFont(9.5f),
                 ForeColor = DesignSystem.Colors.TextPrimary,
                 Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleLeft
+                TextAlign = ContentAlignment.MiddleLeft,
+                Height = 30
             };
+        }
+
+        private TextBox CreateTextBox(int width)
+        {
+            return new TextBox
+            {
+                Width = width,
+                Height = 25,
+                BackColor = DesignSystem.Colors.ControlBackground,
+                ForeColor = DesignSystem.Colors.TextPrimary,
+                BorderStyle = BorderStyle.FixedSingle,
+                Font = DesignSystem.Typography.GetMonoFont(9)
+            };
+        }
+
+        private void CreateTopicInputGroup(TableLayoutPanel parent, int rowIndex, string labelText,
+            out TextBox textBox, out Label stationLabel)
+        {
+            var label = CreateFieldLabel(labelText);
             parent.Controls.Add(label, 0, rowIndex);
 
             var groupPanel = new FlowLayoutPanel
@@ -143,15 +249,7 @@ namespace BetriebsmittelPublisher.UI
                 Height = 60
             };
 
-            textBox = new TextBox
-            {
-                Width = 400,
-                Height = 25,
-                BackColor = DesignSystem.Colors.ControlBackground,
-                ForeColor = DesignSystem.Colors.TextPrimary,
-                BorderStyle = BorderStyle.FixedSingle,
-                Font = DesignSystem.Typography.GetMonoFont(9)
-            };
+            textBox = CreateTextBox(420);
             groupPanel.Controls.Add(textBox);
 
             stationLabel = new Label
@@ -176,15 +274,76 @@ namespace BetriebsmittelPublisher.UI
             stationLabel.Text = stationNumber.HasValue ? $"Station: {stationNumber.Value}" : "Station: -";
         }
 
+        private async void TestConnectionButton_Click(object? sender, EventArgs e)
+        {
+            _testConnectionButton.Enabled = false;
+            _connectionTestLabel.Text = "Verbinde...";
+            _connectionTestLabel.ForeColor = DesignSystem.Colors.TextSecondary;
+            Logger.Info($"Verbindungstest zu {_brokerAddressTextBox.Text}:{(int)_brokerPortNumeric.Value}");
+
+            var testManager = new ConnectionManager();
+            try
+            {
+                using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(5));
+                await testManager.ConnectAsync(_brokerAddressTextBox.Text.Trim(), (int)_brokerPortNumeric.Value, cts.Token);
+
+                var connectMessage = new MqttConnectMessage
+                {
+                    ClientId = string.IsNullOrWhiteSpace(_clientIdTextBox.Text) ? "BetriebsmittelPublisher-Test" : _clientIdTextBox.Text.Trim(),
+                    Username = _usernameTextBox.Text,
+                    Password = _passwordTextBox.Text
+                };
+
+                var connectPacket = MqttPacketBuilder.BuildConnectPacket(connectMessage);
+                await testManager.SendPacketAsync(connectPacket, cts.Token);
+                var response = await testManager.ReceivePacketAsync(cts.Token);
+
+                bool accepted = response.Length >= 4 && response[3] == 0x00;
+                if (accepted)
+                {
+                    _connectionTestLabel.Text = "Erfolgreich verbunden";
+                    _connectionTestLabel.ForeColor = Color.FromArgb(76, 175, 80);
+                    Logger.Info("Verbindungstest erfolgreich");
+                }
+                else
+                {
+                    byte returnCode = response.Length >= 4 ? response[3] : (byte)0xFF;
+                    _connectionTestLabel.Text = $"Broker lehnte ab (Code {returnCode})";
+                    _connectionTestLabel.ForeColor = DesignSystem.Colors.Warning;
+                    Logger.Warning($"Verbindungstest: Broker lehnte ab (Code {returnCode})");
+                }
+            }
+            catch (Exception ex)
+            {
+                _connectionTestLabel.Text = $"Fehlgeschlagen: {ex.Message}";
+                _connectionTestLabel.ForeColor = DesignSystem.Colors.Error;
+                Logger.Error("Verbindungstest fehlgeschlagen", ex);
+            }
+            finally
+            {
+                testManager.Dispose();
+                _testConnectionButton.Enabled = true;
+            }
+        }
+
         private void ValidateInput(object? sender, EventArgs e)
         {
-            var isValid = ValidateTopic(_topic1TextBox.Text) &&
+            var isValid = ValidateBrokerSettings() &&
+                          ValidateTopic(_topic1TextBox.Text) &&
                           ValidateTopic(_topic2TextBox.Text) &&
                           ValidateTopic(_topic3TextBox.Text) &&
                           ValidateTopic(_topic4TextBox.Text);
 
             _saveButton.Enabled = isValid;
-            _validationLabel.Text = isValid ? "" : "Invalid topic format. Use alphanumeric, /, _, - only. No spaces.";
+            if (!ValidateBrokerSettings())
+                _validationLabel.Text = "Ungültige Broker-Einstellungen (Adresse erforderlich).";
+            else
+                _validationLabel.Text = isValid ? "" : "Ungültiges Topic-Format. Nur alphanumerisch, /, _, - erlaubt. Keine Leerzeichen.";
+        }
+
+        private bool ValidateBrokerSettings()
+        {
+            return !string.IsNullOrWhiteSpace(_brokerAddressTextBox.Text);
         }
 
         private bool ValidateTopic(string topic)
@@ -200,6 +359,12 @@ namespace BetriebsmittelPublisher.UI
 
         private void LoadSettingsToForm()
         {
+            _brokerAddressTextBox.Text = _settings.BrokerAddress;
+            _brokerPortNumeric.Value = _settings.BrokerPort;
+            _clientIdTextBox.Text = _settings.ClientId;
+            _usernameTextBox.Text = _settings.Username;
+            _passwordTextBox.Text = _settings.Password;
+
             _topic1TextBox.Text = _settings.Betriebsmittel1Topic;
             _topic2TextBox.Text = _settings.Betriebsmittel2Topic;
             _topic3TextBox.Text = _settings.Betriebsmittel3Topic;
@@ -215,6 +380,12 @@ namespace BetriebsmittelPublisher.UI
 
         private void SaveButton_Click(object? sender, EventArgs e)
         {
+            if (!ValidateBrokerSettings())
+            {
+                _validationLabel.Text = "Cannot save: Broker-Adresse fehlt.";
+                return;
+            }
+
             if (!ValidateTopic(_topic1TextBox.Text) ||
                 !ValidateTopic(_topic2TextBox.Text) ||
                 !ValidateTopic(_topic3TextBox.Text) ||
@@ -223,6 +394,12 @@ namespace BetriebsmittelPublisher.UI
                 _validationLabel.Text = "Cannot save: Invalid topic format detected.";
                 return;
             }
+
+            _settings.BrokerAddress = _brokerAddressTextBox.Text.Trim();
+            _settings.BrokerPort = (int)_brokerPortNumeric.Value;
+            _settings.ClientId = _clientIdTextBox.Text.Trim();
+            _settings.Username = _usernameTextBox.Text;
+            _settings.Password = _passwordTextBox.Text;
 
             _settings.Betriebsmittel1Topic = _topic1TextBox.Text;
             _settings.Betriebsmittel2Topic = _topic2TextBox.Text;

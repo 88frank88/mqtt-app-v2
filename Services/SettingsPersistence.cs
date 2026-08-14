@@ -40,6 +40,22 @@ namespace BetriebsmittelPublisher.Services
 
                     switch (key)
                     {
+                        case "broker_address":
+                            settings.BrokerAddress = value;
+                            break;
+                        case "broker_port":
+                            if (int.TryParse(value, out int port) && port > 0 && port <= 65535)
+                                settings.BrokerPort = port;
+                            break;
+                        case "client_id":
+                            settings.ClientId = value;
+                            break;
+                        case "username":
+                            settings.Username = value;
+                            break;
+                        case "password":
+                            settings.Password = value;
+                            break;
                         case "betriebsmittel1_topic":
                             settings.Betriebsmittel1Topic = value;
                             break;
@@ -70,7 +86,13 @@ namespace BetriebsmittelPublisher.Services
             {
                 Logger.Info($"Speichere Einstellungen nach: {SettingsFilePath}");
 
-                var content = $"[Betriebsmittel]\n" +
+                var content = $"[Broker]\n" +
+                             $"broker_address={settings.BrokerAddress}\n" +
+                             $"broker_port={settings.BrokerPort}\n" +
+                             $"client_id={settings.ClientId}\n" +
+                             $"username={settings.Username}\n" +
+                             $"password={settings.Password}\n" +
+                             $"[Betriebsmittel]\n" +
                              $"betriebsmittel1_topic={settings.Betriebsmittel1Topic}\n" +
                              $"betriebsmittel2_topic={settings.Betriebsmittel2Topic}\n" +
                              $"betriebsmittel3_topic={settings.Betriebsmittel3Topic}\n" +

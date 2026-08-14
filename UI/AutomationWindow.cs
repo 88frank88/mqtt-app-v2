@@ -19,6 +19,7 @@ namespace BetriebsmittelPublisher.UI
         private Button _clearButton = null!;
         private Label _connectionStatus = null!;
         private readonly Services.ConnectionManager _connectionManager;
+        private Models.SettingsModel _settings = null!;
 
         public AutomationWindow(Services.ConnectionManager connectionManager)
         {
@@ -26,9 +27,11 @@ namespace BetriebsmittelPublisher.UI
             _model = new PgAutomationModel();
             _generator = new PgNumberGenerator();
             _xmlConverter = new XmlConverter();
+            _settings = SettingsPersistence.Load();
             Text = $"PG-Number Automation - {Core.VersionInfo.ShortInfo}";
             InitializeComponents();
             SubscribeToEvents();
+            Logger.Info("AutomationWindow geoeffnet");
         }
 
         private void InitializeComponents()
@@ -87,7 +90,33 @@ namespace BetriebsmittelPublisher.UI
                 Margin = new Padding(0, 15, 0, 0)
             };
 
-            panel.Controls.AddRange(new Control[] { title, _connectionStatus });
+            var disconnectButton = new Button
+            {
+                Text = "Trennen",
+                Size = new Size(90, 30),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = DesignSystem.Colors.ControlBackground,
+                ForeColor = DesignSystem.Colors.TextPrimary,
+                Dock = DockStyle.Right,
+                Margin = new Padding(8, 15, 8, 0)
+            };
+            disconnectButton.FlatAppearance.BorderSize = 1;
+            disconnectButton.FlatAppearance.BorderColor = DesignSystem.Colors.ControlBorder;
+            disconnectButton.Click += DisconnectButton_Click;
+
+            var connectButton = new Button
+            {
+                Text = "Verbinden",
+                Size = new Size(100, 30),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = DesignSystem.Colors.Accent,
+                ForeColor = DesignSystem.Colors.ButtonForeground,
+                Dock = DockStyle.Right,
+                Margin = new Padding(8, 15, 8, 0)
+            };
+            connectButton.Click += ConnectButton_Click;
+
+            panel.Controls.AddRange(new Control[] { title, _connectionStatus, disconnectButton, connectButton });
             return panel;
         }
 
@@ -257,6 +286,69 @@ namespace BetriebsmittelPublisher.UI
             UpdateConnectionStatus();
         }
 
+        private async void ConnectButton_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                _settings = SettingsPersistence.Load();
+                Logger.Info($"Verbinde mit Broker {_settings.BrokerAddress}:{_settings.BrokerPort}...");
+
+                _connectionStatus.Text = "Verbinde...";
+                _connectionStatus.ForeColor = DesignSystem.Colors.Warning;
+
+                using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(5));
+                await _connectionManager.ConnectAsync(_settings.BrokerAddress, _settings.BrokerPort, cts.Token);
+
+                var connectMessage = new MqttConnectMessage
+                {
+                    ClientId = string.IsNullOrWhiteSpace(_settings.ClientId) ? "BetriebsmittelPublisher" : _settings.ClientId,
+                    Username = _settings.Username,
+                    Password = _settings.Password
+                };
+
+                var connectPacket = MqttPacketBuilder.BuildConnectPacket(connectMessage);
+                await _connectionManager.SendPacketAsync(connectPacket, cts.Token);
+                var response = await _connectionManager.ReceivePacketAsync(cts.Token);
+
+                bool accepted = response.Length >= 4 && response[3] == 0x00;
+                if (!accepted)
+                {
+                    byte returnCode = response.Length >= 4 ? response[3] : (byte)0xFF;
+                    Logger.Warning($"Broker lehnte Verbindung ab (Code {returnCode})");
+                    await _connectionManager.DisconnectAsync();
+                    UpdateConnectionStatus();
+                    MessageBox.Show($"Broker lehnte die Verbindung ab (Return-Code {returnCode}).\nPrüfen Sie Client-ID und Zugangsdaten.", "Verbindung abgelehnt", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                Logger.Info("MQTT-Verbindung hergestellt");
+                UpdateConnectionStatus();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Verbindung fehlgeschlagen", ex);
+                UpdateConnectionStatus();
+                MessageBox.Show($"Verbindung fehlgeschlagen: {ex.Message}\n\nPrüfen Sie die Broker-Einstellungen unter 'Settings'.", "Verbindungsfehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void DisconnectButton_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (_connectionManager.IsConnected)
+                {
+                    await _connectionManager.DisconnectAsync();
+                    Logger.Info("MQTT-Verbindung getrennt");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Trennen fehlgeschlagen", ex);
+            }
+            UpdateConnectionStatus();
+        }
+
         private void UpdateConnectionStatus()
         {
             if (_connectionManager != null && _connectionManager.IsConnected)
@@ -350,14 +442,33 @@ namespace BetriebsmittelPublisher.UI
 
                 if (_connectionManager != null && _connectionManager.IsConnected)
                 {
-                    var message = new MqttMessage
+                    _settings = SettingsPersistence.Load();
+                    var payload = System.Text.Encoding.UTF8.GetBytes(xml);
+
+                    var topics = new[]
                     {
-                        Topic = "betriebsmittel/pg-numbers",
-                        Payload = System.Text.Encoding.UTF8.GetBytes(xml),
-                        QoS = MqttQoS.AtMostOnce
+                        _settings.Betriebsmittel1Topic,
+                        _settings.Betriebsmittel2Topic,
+                        _settings.Betriebsmittel3Topic,
+                        _settings.Betriebsmittel4Topic
                     };
 
-                    _connectionManager.Publish(message);
+                    int publishedCount = 0;
+                    foreach (var topic in topics)
+                    {
+                        if (string.IsNullOrWhiteSpace(topic))
+                            continue;
+
+                        var message = new MqttMessage
+                        {
+                            Topic = topic,
+                            Payload = payload,
+                            QoS = MqttQoS.AtMostOnce
+                        };
+
+                        _connectionManager.Publish(message);
+                        publishedCount++;
+                    }
 
                     foreach (var row in _model.TableRows)
                     {
@@ -368,8 +479,8 @@ namespace BetriebsmittelPublisher.UI
                     }
 
                     UpdateTableRows();
-                    Logger.Info("XML erfolgreich veroeffentlicht");
-                    MessageBox.Show("XML erfolgreich veroeffentlicht", "Erfolg", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    Logger.Info($"XML erfolgreich auf {publishedCount} Topics veroeffentlicht");
+                    MessageBox.Show($"XML erfolgreich auf {publishedCount} Topics veroeffentlicht", "Erfolg", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
