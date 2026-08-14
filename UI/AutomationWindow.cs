@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Drawing;
 using BetriebsmittelPublisher.Models;
@@ -9,34 +10,27 @@ namespace BetriebsmittelPublisher.UI
 {
     public class AutomationWindow : BaseForm
     {
-        private PgAutomationModel _model = null!;
-        private PgNumberGenerator _generator = null!;
-        private XmlConverter _xmlConverter = null!;
-        private TextBox _motorNumberInput = null!;
         private DataGridView _dataGrid = null!;
-        private Button _generateButton = null!;
+        private Button _addRowButton = null!;
+        private Button _removeRowButton = null!;
         private Button _publishButton = null!;
         private Button _clearButton = null!;
         private Label _connectionStatus = null!;
         private readonly Services.ConnectionManager _connectionManager;
         private Models.SettingsModel _settings = null!;
+        private const int MaxRows = 10;
 
         public AutomationWindow(Services.ConnectionManager connectionManager)
         {
             _connectionManager = connectionManager;
-            _model = new PgAutomationModel();
-            _generator = new PgNumberGenerator();
-            _xmlConverter = new XmlConverter();
             _settings = SettingsPersistence.Load();
             Text = $"PG-Number Automation - {Core.VersionInfo.ShortInfo}";
             InitializeComponents();
-            SubscribeToEvents();
             Logger.Info("AutomationWindow geoeffnet");
         }
 
         private void InitializeComponents()
         {
-            this.Text = "PG-Number Automation";
             this.Size = new Size(900, 700);
             this.BackColor = DesignSystem.Colors.WindowBackground;
 
@@ -49,14 +43,12 @@ namespace BetriebsmittelPublisher.UI
                 BackColor = DesignSystem.Colors.WindowBackground
             };
 
-            layout.RowStyles.Clear();
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 50));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80));
 
             layout.Controls.Add(CreateHeaderSection(), 0, 0);
-            layout.Controls.Add(CreateInputSection(), 0, 1);
             layout.Controls.Add(CreateTableSection(), 0, 2);
             layout.Controls.Add(CreateActionSection(), 0, 3);
 
@@ -73,7 +65,7 @@ namespace BetriebsmittelPublisher.UI
 
             var title = new Label
             {
-                Text = "PG-Number Automation",
+                Text = "Betriebsmittel-Publisher",
                 Font = DesignSystem.Fonts.Headline,
                 ForeColor = DesignSystem.Colors.TextPrimary,
                 Dock = DockStyle.Left,
@@ -82,7 +74,7 @@ namespace BetriebsmittelPublisher.UI
 
             _connectionStatus = new Label
             {
-                Text = "Disconnected",
+                Text = "Getrennt",
                 Font = DesignSystem.Fonts.Caption,
                 ForeColor = DesignSystem.Colors.Error,
                 Dock = DockStyle.Right,
@@ -117,44 +109,7 @@ namespace BetriebsmittelPublisher.UI
             connectButton.Click += ConnectButton_Click;
 
             panel.Controls.AddRange(new Control[] { title, _connectionStatus, disconnectButton, connectButton });
-            return panel;
-        }
-
-        private Panel CreateInputSection()
-        {
-            var panel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Padding = new Padding(0, DesignSystem.Spacing.Medium, 0, 0),
-                BackColor = DesignSystem.Colors.WindowBackground
-            };
-
-            var label = new Label
-            {
-                Text = "Motor Number:",
-                Font = DesignSystem.Fonts.Body,
-                ForeColor = DesignSystem.Colors.TextPrimary,
-                Location = new Point(0, 5),
-                AutoSize = true
-            };
-
-            _motorNumberInput = new TextBox
-            {
-                Font = DesignSystem.Fonts.Monospace,
-                ForeColor = DesignSystem.Colors.TextPrimary,
-                BackColor = DesignSystem.Colors.ControlBackground,
-                BorderStyle = BorderStyle.FixedSingle,
-                Location = new Point(150, 5),
-                Size = new Size(200, 30),
-                Text = _model.MotorNumber
-            };
-
-            _motorNumberInput.TextChanged += (s, e) => 
-            {
-                _model.MotorNumber = _motorNumberInput.Text;
-            };
-
-            panel.Controls.AddRange(new Control[] { label, _motorNumberInput });
+            UpdateConnectionStatus();
             return panel;
         }
 
@@ -169,57 +124,130 @@ namespace BetriebsmittelPublisher.UI
             _dataGrid = new DataGridView
             {
                 Dock = DockStyle.Fill,
-                AutoGenerateColumns = false,
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
-                ReadOnly = true,
+                AllowUserToResizeRows = false,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 BackgroundColor = DesignSystem.Colors.WindowBackground,
                 ForeColor = DesignSystem.Colors.TextPrimary,
                 GridColor = DesignSystem.Colors.ControlBorder,
                 BorderStyle = BorderStyle.None,
-                RowHeadersVisible = false
+                RowHeadersVisible = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                EditMode = DataGridViewEditMode.EditOnEnter
             };
 
-            _dataGrid.CellFormatting += DataGrid_CellFormatting;
-            _dataGrid.RowsAdded += (s, e) => UpdateTableRows();
-
-            _dataGrid.Columns.Add(new DataGridViewTextBoxColumn
+            var betriebsmittelColumn = new DataGridViewComboBoxColumn
             {
-                HeaderText = "Row",
-                DataPropertyName = "RowNumber",
-                Width = 50
-            });
+                Name = "Betriebsmittel",
+                HeaderText = "Betriebsmittel",
+                ReadOnly = false,
+                FillWeight = 30
+            };
 
-            _dataGrid.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Motor Number",
-                DataPropertyName = "MotorNumber",
-                Width = 150
-            });
+            _settings = SettingsPersistence.Load();
+            betriebsmittelColumn.Items.Add("Betriebsmittel 1");
+            betriebsmittelColumn.Items.Add("Betriebsmittel 2");
+            betriebsmittelColumn.Items.Add("Betriebsmittel 3");
+            betriebsmittelColumn.Items.Add("Betriebsmittel 4");
 
-            _dataGrid.Columns.Add(new DataGridViewTextBoxColumn
+            var pgColumn = new DataGridViewTextBoxColumn
             {
-                HeaderText = "PG Number",
-                DataPropertyName = "PgNumber",
-                Width = 250
-            });
+                Name = "PgNumber",
+                HeaderText = "PG-Nummer",
+                ReadOnly = false,
+                FillWeight = 50
+            };
 
-            _dataGrid.Columns.Add(new DataGridViewTextBoxColumn
+            var statusColumn = new DataGridViewTextBoxColumn
             {
+                Name = "Status",
                 HeaderText = "Status",
-                DataPropertyName = "Status",
-                Width = 100
-            });
+                ReadOnly = true,
+                FillWeight = 20
+            };
 
-            _dataGrid.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Actions",
-                Width = 150
-            });
+            _dataGrid.Columns.Add(betriebsmittelColumn);
+            _dataGrid.Columns.Add(pgColumn);
+            _dataGrid.Columns.Add(statusColumn);
+
+            _dataGrid.DefaultCellStyle.BackColor = DesignSystem.Colors.ControlBackground;
+            _dataGrid.DefaultCellStyle.ForeColor = DesignSystem.Colors.TextPrimary;
+            _dataGrid.DefaultCellStyle.SelectionBackColor = DesignSystem.Colors.ControlHover;
+            _dataGrid.DefaultCellStyle.SelectionForeColor = DesignSystem.Colors.TextPrimary;
+            _dataGrid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(0x26, 0x2a, 0x3a);
+            _dataGrid.AlternatingRowsDefaultCellStyle.ForeColor = DesignSystem.Colors.TextPrimary;
+            _dataGrid.ColumnHeadersDefaultCellStyle.BackColor = DesignSystem.Colors.ControlBackground;
+            _dataGrid.ColumnHeadersDefaultCellStyle.ForeColor = DesignSystem.Colors.TextPrimary;
+            _dataGrid.EnableHeadersVisualStyles = false;
+            _dataGrid.RowTemplate.Height = 30;
+
+            _dataGrid.DataError += (s, e) => { e.ThrowException = false; };
 
             panel.Controls.Add(_dataGrid);
+
+            var rowButtonPanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                FlowDirection = FlowDirection.LeftToRight,
+                Height = 40,
+                Padding = new Padding(0, 5, 0, 0)
+            };
+
+            _addRowButton = new Button
+            {
+                Text = "+ Zeile hinzufuegen",
+                Size = new Size(150, 30),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = DesignSystem.Colors.ControlBackground,
+                ForeColor = DesignSystem.Colors.TextPrimary
+            };
+            _addRowButton.FlatAppearance.BorderSize = 1;
+            _addRowButton.FlatAppearance.BorderColor = DesignSystem.Colors.ControlBorder;
+            _addRowButton.Click += (s, e) => AddRow();
+            rowButtonPanel.Controls.Add(_addRowButton);
+
+            _removeRowButton = new Button
+            {
+                Text = "- Zeile entfernen",
+                Size = new Size(140, 30),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = DesignSystem.Colors.ControlBackground,
+                ForeColor = DesignSystem.Colors.TextPrimary
+            };
+            _removeRowButton.FlatAppearance.BorderSize = 1;
+            _removeRowButton.FlatAppearance.BorderColor = DesignSystem.Colors.ControlBorder;
+            _removeRowButton.Click += (s, e) => RemoveSelectedRow();
+            rowButtonPanel.Controls.Add(_removeRowButton);
+
+            panel.Controls.Add(rowButtonPanel);
+
+            AddRow();
+
             return panel;
+        }
+
+        private void AddRow()
+        {
+            if (_dataGrid.Rows.Count >= MaxRows)
+            {
+                Logger.Warning($"Maximale Zeilenzahl ({MaxRows}) erreicht");
+                return;
+            }
+
+            var rowIndex = _dataGrid.Rows.Add();
+            var row = _dataGrid.Rows[rowIndex];
+            row.Cells["Betriebsmittel"].Value = "Betriebsmittel 1";
+            row.Cells["Status"].Value = "offen";
+            Logger.Debug($"Zeile {rowIndex + 1} hinzugefuegt");
+        }
+
+        private void RemoveSelectedRow()
+        {
+            if (_dataGrid.CurrentRow != null && !_dataGrid.CurrentRow.IsNewRow)
+            {
+                _dataGrid.Rows.Remove(_dataGrid.CurrentRow);
+            }
         }
 
         private Panel CreateActionSection()
@@ -227,63 +255,38 @@ namespace BetriebsmittelPublisher.UI
             var panel = new Panel
             {
                 Dock = DockStyle.Fill,
-                BackColor = DesignSystem.Colors.WindowBackground,
-                Padding = new Padding(0, DesignSystem.Spacing.Medium, 0, 0)
+                BackColor = DesignSystem.Colors.WindowBackground
             };
-
-            _generateButton = new Button
-            {
-                Text = "Generate PG Numbers",
-                Font = DesignSystem.Fonts.Body,
-                ForeColor = DesignSystem.Colors.ButtonForeground,
-                BackColor = DesignSystem.Colors.Accent,
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(180, 40),
-                Location = new Point(600, 10)
-            };
-
-            _generateButton.FlatAppearance.BorderSize = 0;
 
             _publishButton = new Button
             {
                 Text = "Publish XML",
                 Font = DesignSystem.Fonts.Body,
-                ForeColor = DesignSystem.Colors.TextPrimary,
-                BackColor = DesignSystem.Colors.ControlBackground,
+                ForeColor = DesignSystem.Colors.ButtonForeground,
+                BackColor = DesignSystem.Colors.Accent,
                 FlatStyle = FlatStyle.Flat,
-                Size = new Size(150, 40),
-                Location = new Point(420, 10)
+                Size = new Size(180, 40),
+                Location = new Point(660, 10)
             };
-
-            _publishButton.FlatAppearance.BorderSize = 1;
-            _publishButton.FlatAppearance.BorderColor = DesignSystem.Colors.ControlBorder;
+            _publishButton.FlatAppearance.BorderSize = 0;
+            _publishButton.Click += PublishButton_Click;
 
             _clearButton = new Button
             {
-                Text = "Clear Table",
+                Text = "Tabelle leeren",
                 Font = DesignSystem.Fonts.Body,
                 ForeColor = DesignSystem.Colors.TextPrimary,
                 BackColor = DesignSystem.Colors.ControlBackground,
                 FlatStyle = FlatStyle.Flat,
-                Size = new Size(120, 40),
-                Location = new Point(280, 10)
+                Size = new Size(140, 40),
+                Location = new Point(500, 10)
             };
-
             _clearButton.FlatAppearance.BorderSize = 1;
             _clearButton.FlatAppearance.BorderColor = DesignSystem.Colors.ControlBorder;
-
-            _generateButton.Click += GenerateButton_Click;
-            _publishButton.Click += PublishButton_Click;
             _clearButton.Click += ClearButton_Click;
 
-            panel.Controls.AddRange(new Control[] { _clearButton, _publishButton, _generateButton });
+            panel.Controls.AddRange(new Control[] { _clearButton, _publishButton });
             return panel;
-        }
-
-        private void SubscribeToEvents()
-        {
-            _model.PropertyChanged += Model_PropertyChanged;
-            UpdateConnectionStatus();
         }
 
         private async void ConnectButton_Click(object? sender, EventArgs e)
@@ -310,14 +313,16 @@ namespace BetriebsmittelPublisher.UI
                 await _connectionManager.SendPacketAsync(connectPacket, cts.Token);
                 var response = await _connectionManager.ReceivePacketAsync(cts.Token);
 
-                bool accepted = response.Length >= 4 && response[3] == 0x00;
+                Logger.Info($"CONNACK erhalten: {BitConverter.ToString(response)}");
+
+                bool accepted = response.Length >= 4 && response[0] == 0x20 && response[3] == 0x00;
                 if (!accepted)
                 {
                     byte returnCode = response.Length >= 4 ? response[3] : (byte)0xFF;
                     Logger.Warning($"Broker lehnte Verbindung ab (Code {returnCode})");
                     await _connectionManager.DisconnectAsync();
                     UpdateConnectionStatus();
-                    MessageBox.Show($"Broker lehnte die Verbindung ab (Return-Code {returnCode}).\nPrüfen Sie Client-ID und Zugangsdaten.", "Verbindung abgelehnt", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show($"Broker lehnte die Verbindung ab (Return-Code {returnCode}).\nPruefen Sie Client-ID und Zugangsdaten.", "Verbindung abgelehnt", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -328,7 +333,7 @@ namespace BetriebsmittelPublisher.UI
             {
                 Logger.Error("Verbindung fehlgeschlagen", ex);
                 UpdateConnectionStatus();
-                MessageBox.Show($"Verbindung fehlgeschlagen: {ex.Message}\n\nPrüfen Sie die Broker-Einstellungen unter 'Settings'.", "Verbindungsfehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Verbindung fehlgeschlagen: {ex.Message}\n\nPruefen Sie die Broker-Einstellungen unter 'Settings'.", "Verbindungsfehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -353,153 +358,141 @@ namespace BetriebsmittelPublisher.UI
         {
             if (_connectionManager != null && _connectionManager.IsConnected)
             {
-                _connectionStatus.Text = "Connected";
+                _connectionStatus.Text = "Verbunden";
                 _connectionStatus.ForeColor = Color.FromArgb(76, 175, 80);
             }
             else
             {
-                _connectionStatus.Text = "Disconnected";
+                _connectionStatus.Text = "Getrennt";
                 _connectionStatus.ForeColor = DesignSystem.Colors.Error;
             }
         }
 
-        private void Model_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private List<(string betriebsmittel, string pgNumber, DataGridViewRow row)> CollectFilledRows(out string? validationError)
         {
-            if (e.PropertyName == nameof(PgAutomationModel.TableRows))
+            validationError = null;
+            var filledRows = new List<(string, string, DataGridViewRow)>();
+            var usedCombinations = new HashSet<string>();
+
+            foreach (DataGridViewRow row in _dataGrid.Rows)
             {
-                UpdateTableRows();
-            }
-        }
+                if (row.IsNewRow) continue;
 
-        private void UpdateTableRows()
-        {
-            _dataGrid.DataSource = null;
-            _dataGrid.DataSource = _model.TableRows;
-        }
+                var betriebsmittel = row.Cells["Betriebsmittel"].Value?.ToString() ?? "";
+                var pgNumber = row.Cells["PgNumber"].Value?.ToString()?.Trim() ?? "";
 
-        private void DataGrid_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
-        {
-            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
-            {
-                var row = _dataGrid.Rows[e.RowIndex];
-                var dataRow = row.DataBoundItem as PgTableRow;
+                if (string.IsNullOrEmpty(betriebsmittel) && string.IsNullOrEmpty(pgNumber))
+                    continue;
 
-                if (dataRow != null)
+                if (string.IsNullOrEmpty(betriebsmittel))
                 {
-                    row.DefaultCellStyle.ForeColor = DesignSystem.Colors.TextPrimary;
-                    row.DefaultCellStyle.BackColor = DesignSystem.Colors.WindowBackground;
-                    row.DefaultCellStyle.SelectionForeColor = DesignSystem.Colors.TextPrimary;
-                    row.DefaultCellStyle.SelectionBackColor = DesignSystem.Colors.Accent;
-
-                    switch (dataRow.Status.ToLower())
-                    {
-                        case "generated":
-                            row.DefaultCellStyle.ForeColor = Color.FromArgb(76, 175, 80);
-                            break;
-                        case "published":
-                            row.DefaultCellStyle.ForeColor = Color.FromArgb(33, 150, 243);
-                            break;
-                        case "error":
-                            row.DefaultCellStyle.ForeColor = DesignSystem.Colors.Error;
-                            break;
-                    }
+                    validationError = $"Zeile {row.Index + 1}: Bitte Betriebsmittel auswaehlen.";
+                    return filledRows;
                 }
-            }
-        }
 
-        private void GenerateButton_Click(object? sender, EventArgs e)
-        {
-            if (!_model.ValidateMotorNumber(out string? error))
+                if (string.IsNullOrEmpty(pgNumber))
+                {
+                    validationError = $"Zeile {row.Index + 1}: Bitte PG-Nummer eintragen.";
+                    return filledRows;
+                }
+
+                var combo = $"{betriebsmittel}|{pgNumber}";
+                if (!usedCombinations.Add(combo))
+                {
+                    validationError = $"Zeile {row.Index + 1}: Kombination {betriebsmittel} / {pgNumber} existiert bereits.";
+                    return filledRows;
+                }
+
+                filledRows.Add((betriebsmittel, pgNumber, row));
+            }
+
+            if (filledRows.Count == 0)
             {
-                Logger.Warning($"Ungueltige Motor-Nummer: {_model.MotorNumber}");
-                MessageBox.Show(error ?? "Invalid motor number", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                validationError = "Keine Daten eingetragen. Bitte Betriebsmittel auswaehlen und PG-Nummer eintragen.";
             }
 
-            int motorNumber = int.Parse(_model.MotorNumber);
-            Logger.Info($"Generiere PG-Nummern fuer Motor: {motorNumber}");
-            var pgNumbers = _generator.GeneratePgNumbers(motorNumber, 10);
-            Logger.Info($"{pgNumbers.Length} PG-Nummern generiert");
-
-            for (int i = 0; i < _model.TableRows.Count && i < pgNumbers.Length; i++)
-            {
-                _model.TableRows[i].MotorNumber = _model.MotorNumber;
-                _model.TableRows[i].PgNumber = pgNumbers[i];
-                _model.TableRows[i].Status = "generated";
-                _model.TableRows[i].Timestamp = DateTime.Now;
-                _model.TableRows[i].Error = string.Empty;
-            }
-
-            UpdateTableRows();
+            return filledRows;
         }
 
         private void PublishButton_Click(object? sender, EventArgs e)
         {
             try
             {
-                var xml = _xmlConverter.GenerateXml(_model.TableRows);
-                Logger.Info($"XML generiert ({xml.Length} bytes)");
+                if (_dataGrid.IsCurrentCellInEditMode)
+                    _dataGrid.EndEdit();
 
-                if (_connectionManager != null && _connectionManager.IsConnected)
-                {
-                    _settings = SettingsPersistence.Load();
-                    var payload = System.Text.Encoding.UTF8.GetBytes(xml);
-
-                    var topics = new[]
-                    {
-                        _settings.Betriebsmittel1Topic,
-                        _settings.Betriebsmittel2Topic,
-                        _settings.Betriebsmittel3Topic,
-                        _settings.Betriebsmittel4Topic
-                    };
-
-                    int publishedCount = 0;
-                    foreach (var topic in topics)
-                    {
-                        if (string.IsNullOrWhiteSpace(topic))
-                            continue;
-
-                        var message = new MqttMessage
-                        {
-                            Topic = topic,
-                            Payload = payload,
-                            QoS = MqttQoS.AtMostOnce
-                        };
-
-                        _connectionManager.Publish(message);
-                        publishedCount++;
-                    }
-
-                    foreach (var row in _model.TableRows)
-                    {
-                        if (row.Status == "generated")
-                        {
-                            row.Status = "published";
-                        }
-                    }
-
-                    UpdateTableRows();
-                    Logger.Info($"XML erfolgreich auf {publishedCount} Topics veroeffentlicht");
-                    MessageBox.Show($"XML erfolgreich auf {publishedCount} Topics veroeffentlicht", "Erfolg", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
+                if (!_connectionManager.IsConnected)
                 {
                     Logger.Warning("Publish-Versuch ohne MQTT-Verbindung");
                     MessageBox.Show("Nicht mit MQTT-Broker verbunden. Bitte zuerst verbinden.", "Verbindungsfehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
+
+                var filledRows = CollectFilledRows(out string? validationError);
+                if (validationError != null)
+                {
+                    Logger.Warning($"Publish abgelehnt: {validationError}");
+                    MessageBox.Show(validationError, "Validierung", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                _settings = SettingsPersistence.Load();
+                var topicMap = new Dictionary<string, string>
+                {
+                    { "Betriebsmittel 1", _settings.Betriebsmittel1Topic },
+                    { "Betriebsmittel 2", _settings.Betriebsmittel2Topic },
+                    { "Betriebsmittel 3", _settings.Betriebsmittel3Topic },
+                    { "Betriebsmittel 4", _settings.Betriebsmittel4Topic }
+                };
+
+                int publishedCount = 0;
+                var publishedXml = new List<string>();
+
+                foreach (var (betriebsmittel, pgNumber, row) in filledRows)
+                {
+                    var topic = topicMap.TryGetValue(betriebsmittel, out var t) ? t : "";
+                    if (string.IsNullOrWhiteSpace(topic))
+                    {
+                        row.Cells["Status"].Value = "kein Topic";
+                        Logger.Warning($"Kein Topic konfiguriert fuer {betriebsmittel}");
+                        continue;
+                    }
+
+                    var xml = $"<Betriebsmittel>{Environment.NewLine}" +
+                              $"  <Name>{betriebsmittel}</Name>{Environment.NewLine}" +
+                              $"  <PG-Nummer>{System.Security.SecurityElement.Escape(pgNumber)}</PG-Nummer>{Environment.NewLine}" +
+                              $"  <Timestamp>{DateTime.Now:yyyy-MM-dd HH:mm:ss}</Timestamp>{Environment.NewLine}" +
+                              $"  <Station>{StationNumberParser.ExtractStationNumber(topic) ?? 0}</Station>{Environment.NewLine}" +
+                              $"</Betriebsmittel>";
+
+                    var message = new MqttMessage
+                    {
+                        Topic = topic,
+                        Payload = System.Text.Encoding.UTF8.GetBytes(xml),
+                        QoS = MqttQoS.AtMostOnce
+                    };
+
+                    _connectionManager.Publish(message);
+                    row.Cells["Status"].Value = "veroeffentlicht";
+                    publishedXml.Add($"{betriebsmittel} -> {topic}: {pgNumber}");
+                    publishedCount++;
+                }
+
+                Logger.Info($"{publishedCount} Eintraege veroeffentlicht:{Environment.NewLine}{string.Join(Environment.NewLine, publishedXml)}");
+                MessageBox.Show($"{publishedCount} Eintrag/Eintraege erfolgreich veroeffentlicht.", "Erfolg", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                Logger.Error("Fehler beim Veroeffentlichen des XML", ex);
+                Logger.Error("Fehler beim Veroeffentlichen", ex);
                 MessageBox.Show($"Fehler beim Veroeffentlichen: {ex.Message}", "Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void ClearButton_Click(object? sender, EventArgs e)
         {
-            _model.ClearTable();
-            _motorNumberInput.Text = string.Empty;
-            UpdateTableRows();
+            _dataGrid.Rows.Clear();
+            AddRow();
+            Logger.Info("Tabelle geleert");
         }
     }
 }

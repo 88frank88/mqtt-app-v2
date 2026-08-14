@@ -101,33 +101,35 @@ namespace BetriebsmittelPublisher.Services
                 if (_networkStream == null)
                     throw new InvalidOperationException("Network stream is null");
 
-                // Read fixed header (2 bytes minimum)
-                var fixedHeader = await MqttPacketParser.ReadExactBytesAsync(_networkStream, 2, cancellationToken);
-                
-                // Parse remaining length (variable byte encoding)
+                // Read first header byte (packet type + flags)
+                var firstHeaderByte = await ReadByteAsync(_networkStream, cancellationToken);
+
+                // Parse remaining length (variable byte encoding, starts at byte 2)
                 int remainingLength = 0;
                 int multiplier = 1;
                 byte encodedByte;
-                
+
                 do
                 {
                     encodedByte = await ReadByteAsync(_networkStream, cancellationToken);
                     remainingLength += (encodedByte & 0x7F) * multiplier;
                     multiplier *= 128;
-                    
+
                     if (multiplier > 128 * 128 * 128)
                         throw new InvalidOperationException("Invalid remaining length encoding");
-                        
+
                 } while ((encodedByte & 0x80) != 0);
-                
+
                 // Read variable header + payload
                 var packetData = await MqttPacketParser.ReadExactBytesAsync(_networkStream, remainingLength, cancellationToken);
-                
-                // Combine fixed header + packet data
+
+                // Combine: first header byte + last length byte + payload
+                // (all our responses - CONNACK/SUBACK/PINGRESP - fit in a single length byte)
                 var fullPacket = new byte[2 + remainingLength];
-                Array.Copy(fixedHeader, 0, fullPacket, 0, 2);
+                fullPacket[0] = firstHeaderByte;
+                fullPacket[1] = encodedByte;
                 Array.Copy(packetData, 0, fullPacket, 2, remainingLength);
-                
+
                 return fullPacket;
             }
             catch (Exception ex)
